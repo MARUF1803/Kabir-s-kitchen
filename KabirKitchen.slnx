@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/KabirKitchen.Api/KabirKitchen.Api.csproj" />
+    <Project Path="src/KabirKitchen.Application/KabirKitchen.Application.csproj" />
+    <Project Path="src/KabirKitchen.Domain/KabirKitchen.Domain.csproj" />
+    <Project Path="src/KabirKitchen.Infrastructure/KabirKitchen.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/KabirKitchen.Tests/KabirKitchen.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,140 @@
+.pos-workspace > .pos-products,
+.pos-product-grid {
+  min-width: 0;
+}
+
+.pos-product-card img {
+  display: block;
+}
+
+.pos-product-grid {
+  grid-auto-rows: max-content !important;
+}
+
+.pos-product-card > div:first-child {
+  flex: 0 0 110px;
+}
+
+.pos-category-chips,
+.pos-subcategory-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 10px;
+}
+
+.pos-subcategory-chips {
+  margin-top: -2px;
+  padding: 0 0 12px;
+}
+
+.pos-subcategory-chips button {
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #fff;
+  color: #475569;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 7px 12px;
+}
+
+.pos-subcategory-chips button.active {
+  border-color: #f97316;
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+@media (max-width: 1100px) {
+  .pos-workspace {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto minmax(70vh, 1fr) auto;
+    height: auto !important;
+    min-height: 100vh;
+    overflow: visible !important;
+  }
+
+  .pos-sidebar {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+  }
+
+  .pos-sidebar nav {
+    flex: 0 0 auto !important;
+    flex-direction: row !important;
+    gap: 8px !important;
+    overflow-x: auto;
+    padding: 8px 10px !important;
+  }
+
+  .pos-sidebar nav > button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .pos-sidebar nav > div {
+    display: none !important;
+  }
+
+  .pos-sidebar > div:last-child {
+    flex-direction: row !important;
+    justify-content: flex-end;
+    gap: 8px !important;
+  }
+
+  .pos-sidebar > div:last-child button {
+    justify-content: center !important;
+  }
+
+  .pos-products {
+    grid-column: 1;
+    grid-row: 2;
+    min-width: 0;
+    min-height: 70vh;
+    height: 78vh !important;
+    padding: 12px !important;
+  }
+
+  .pos-product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)) !important;
+  }
+
+  .pos-cart {
+    grid-column: 1;
+    grid-row: 3;
+    min-height: 620px;
+    height: auto !important;
+    overflow: visible !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .pos-product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .pos-product-card {
+    min-width: 0;
+  }
+
+  .pos-product-card > div:first-child {
+    flex-basis: 90px;
+    height: 90px !important;
+  }
+
+  .pos-product-card strong {
+    font-size: 0.74rem !important;
+  }
+
+  .pos-sidebar > div:last-child button {
+    padding: 8px !important;
+    font-size: 0 !important;
+  }
+
+  .pos-sidebar > div:last-child button svg {
+    flex: 0 0 auto;
+  }
+}

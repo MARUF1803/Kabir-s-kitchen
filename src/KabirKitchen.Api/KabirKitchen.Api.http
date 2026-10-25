@@ -1,0 +1,6 @@
+@KabirKitchen.Api_HostAddress = http://localhost:5143
+
+GET {{KabirKitchen.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

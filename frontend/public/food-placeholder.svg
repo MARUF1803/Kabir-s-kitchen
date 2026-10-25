@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="Kabir's Kitchen food image unavailable">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff6e9"/>
+      <stop offset="1" stop-color="#f3ddc7"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="420" fill="url(#bg)"/>
+  <path d="M205 228c13 71 57 111 115 111s102-40 115-111H205Z" fill="#fff" stroke="#a65d32" stroke-width="12" stroke-linejoin="round"/>
+  <path d="M187 224h266" fill="none" stroke="#a65d32" stroke-width="14" stroke-linecap="round"/>
+  <path d="M275 190c-19-23 19-31 0-55m52 55c-19-23 19-31 0-55m52 55c-19-23 19-31 0-55" fill="none" stroke="#d97745" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="269" cy="230" r="9" fill="#e7a646"/>
+  <circle cx="319" cy="231" r="9" fill="#73945b"/>
+  <circle cx="369" cy="230" r="9" fill="#d76c4a"/>
+  <text x="320" y="390" fill="#74452d" font-family="Arial,sans-serif" font-size="19" font-weight="700" text-anchor="middle">Kabir's Kitchen</text>
+</svg>

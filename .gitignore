@@ -1,0 +1,39 @@
+# Secrets and machine-specific configuration
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+**/appsettings*.json
+!**/appsettings.example.json
+**/secrets.json
+**/secrets.*.json
+**/*.user
+**/*.suo
+
+# Build output and dependencies
+**/bin/
+**/obj/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+**/TestResults/
+
+# IDE, logs, local databases, and backups
+.vs/
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.log
+*.db
+*.sqlite
+*.sqlite3
+*.bak
+*.dump
+*.pfx
+*.p12
+*.key
+*.pem
+
