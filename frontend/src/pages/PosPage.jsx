@@ -35,7 +35,10 @@ export default function PosPage() {
     placeOrder,
     quoteOrder,
     getProductUnitPrice,
-    getProductPromotion
+    getProductPromotion,
+    isOnline,
+    offlineQueueCount,
+    syncOfflineOrders
   } = useApp();
 
   // ─── 1. Authentication & Role Gate ───
@@ -271,12 +274,32 @@ export default function PosPage() {
 
   // Order Submission
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+  const [isSyncingOffline, setIsSyncingOffline] = useState(false);
+
+  const handleSyncOffline = async () => {
+    try {
+      setIsSyncingOffline(true);
+      const res = await syncOfflineOrders();
+      if (res.success > 0) {
+        alert(`✓ Successfully synced ${res.success} offline order(s) to cloud database!`);
+      } else if (res.failed > 0) {
+        alert(`⚠ Synced with errors: ${res.failed} order(s) could not be synced yet.`);
+      } else {
+        alert('All orders are up to date.');
+      }
+    } catch (e) {
+      alert('Sync failed: ' + (e.message || 'Unknown error'));
+    } finally {
+      setIsSyncingOffline(false);
+    }
+  };
+
   const handleCompleteOrder = async () => {
     if (!cartItems.length) {
       setNotice('Please select at least one item from the menu.');
       return;
     }
-    if (!priceQuote || quoteLoading || quoteError) {
+    if ((!priceQuote || quoteLoading || quoteError) && isOnline) {
       setNotice('The latest server price is not verified. Please wait or retry before completing this order.');
       return;
     }
@@ -428,6 +451,43 @@ export default function PosPage() {
           <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: '8px', padding: '8px 10px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span><span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block', marginRight: '6px' }} />{activeBranch.name}</span>
           </div>
+
+          {/* Network Connectivity & Offline Mode Indicator */}
+          <div style={{ marginTop: '6px', background: isOnline ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.22)', border: `1px solid ${isOnline ? '#10b981' : '#ef4444'}`, borderRadius: '8px', padding: '6px 10px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: isOnline ? '#34d399' : '#f87171' }}>
+              <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: isOnline ? '#10b981' : '#ef4444', display: 'inline-block' }} />
+              {isOnline ? 'Online (Server Connected)' : 'Offline Mode (Local Storage)'}
+            </span>
+          </div>
+
+          {/* Offline Pending Orders Sync Bar */}
+          {offlineQueueCount > 0 && (
+            <div style={{ marginTop: '8px', background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: '8px', padding: '8px 10px', color: '#92400e', fontSize: '0.72rem' }}>
+              <div style={{ fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span>⚡ {offlineQueueCount} Orders Offline</span>
+                <button
+                  type="button"
+                  onClick={handleSyncOffline}
+                  disabled={isSyncingOffline || !isOnline}
+                  style={{
+                    padding: '3px 8px',
+                    borderRadius: '4px',
+                    border: 'none',
+                    background: isOnline ? '#d97706' : '#94a3b8',
+                    color: '#fff',
+                    cursor: isOnline ? 'pointer' : 'not-allowed',
+                    fontSize: '0.68rem',
+                    fontWeight: 700
+                  }}
+                >
+                  {isSyncingOffline ? 'Syncing...' : 'Sync'}
+                </button>
+              </div>
+              <div style={{ fontSize: '0.66rem', marginTop: '3px', color: '#b45309' }}>
+                {isOnline ? 'Internet ready. Click to sync.' : 'Stored locally. Will auto-sync.'}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Staff Profile Card */}
@@ -1102,6 +1162,12 @@ export default function PosPage() {
               {printCount > 1 && (
                 <div style={{ fontSize: '0.72rem', fontWeight: 900, color: '#000', border: '1px solid #000', padding: '2px 0', margin: '6px 0', letterSpacing: '0.1em' }}>
                   *** DUPLICATE BILL / REPRINT ***
+                </div>
+              )}
+
+              {completedOrder.orderNumber?.startsWith('OFF-') && (
+                <div style={{ fontSize: '0.7rem', fontWeight: 900, color: '#92400e', background: '#fef3c7', border: '1px dashed #d97706', padding: '3px 0', margin: '6px 0', letterSpacing: '0.04em' }}>
+                  *** OFFLINE RECEIPT — QUEUED FOR AUTO-SYNC ***
                 </div>
               )}
 

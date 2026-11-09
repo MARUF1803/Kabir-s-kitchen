@@ -133,3 +133,106 @@ public enum PromotionEngagementType
     Impression = 1,
     Click = 2
 }
+
+// ─── Inventory ERP Enums ────────────────────────────────────────────────────
+
+public enum ProductionType
+{
+    MadeToOrder = 0,
+    BatchProduced = 1
+}
+
+public enum StorageCondition
+{
+    Ambient = 1,
+    Chilled = 2,
+    DeepFrozen = 3
+}
+
+public enum InventoryLotType
+{
+    RawMaterial = 1,
+    SubRecipe = 2,
+    FinishedProduct = 3
+}
+
+public enum InventoryLotStatus
+{
+    Active = 1,
+    Quarantined = 2,
+    Depleted = 3,
+    Disposed = 4
+}
+
+public enum ProductionBatchStatus
+{
+    Draft = 1,
+    Planned = 2,
+    InProgress = 3,
+    Completed = 4,
+    Posted = 5,
+    Cancelled = 6
+}
+
+public enum ProductionTargetType
+{
+    SubRecipe = 1,
+    FinishedProduct = 2
+}
+
+public enum SubRecipeTransactionType
+{
+    ProductionAccepted = 1,
+    ParentRecipeConsumption = 2,
+    WastageSpoilage = 3,
+    AuditAdjustment = 4,
+    TransferIn = 5,
+    TransferOut = 6,
+    Reversal = 7
+}
+
+public enum ProductStockTransactionType
+{
+    ProductionAccepted = 1,
+    PosSale = 2,
+    OnlineSale = 3,
+    WastageDamage = 4,
+    AuditAdjustment = 5,
+    TransferIn = 6,
+    TransferOut = 7,
+    SaleCancelledReversal = 8
+}
+
+public enum ReservoirTransactionType
+{
+    TransferInFromStorage = 1,
+    AbsorbedByBatch = 2,
+    SludgeDiscarded = 3,
+    FullDrainWastage = 4,
+    TransferBackToStorage = 5
+}
+
+public enum UnitDimension
+{
+    Mass = 1,
+    Volume = 2,
+    Discrete = 3
+}
+
+public enum ReservationStatus
+{
+    Pending = 1,
+    Confirmed = 2,
+    Seated = 3,
+    Completed = 4,
+    Cancelled = 5,
+    Rejected = 6
+}
+
+public enum CashShiftStatus
+{
+    Open = 1,
+    Closed = 2,
+    Audited = 3
+}
+

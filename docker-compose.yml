@@ -1,0 +1,36 @@
+services:
+  # ── Microsoft SQL Server 2022 ──
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: kabir_kitchen_db
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "KabirKitchen_ProdPassword2026!"
+      MSSQL_PID: "Standard"
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+    restart: always
+
+  # ── Kabir's Kitchen Backend API (.NET 10) ──
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kabir_kitchen_api
+    depends_on:
+      - db
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=db;Database=KabirKitchenDb;User Id=sa;Password=KabirKitchen_ProdPassword2026!;TrustServerCertificate=True;MultipleActiveResultSets=true;"
+      JwtSettings__Secret: "KabirKitchen_Production_Enterprise_Security_Key_SuperSecret_2026!"
+      JwtSettings__Issuer: "KabirKitchenApi"
+      JwtSettings__Audience: "KabirKitchenClients"
+      ASPNETCORE_ENVIRONMENT: "Production"
+    ports:
+      - "5143:8080"
+    restart: always
+
+volumes:
+  mssql_data:
+

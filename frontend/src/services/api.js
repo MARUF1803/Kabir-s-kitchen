@@ -333,4 +333,66 @@ export const supportApi = {
   askAi: (id, question) => apiClient.post(`/support/conversations/${id}/ai`, { question }).then(r => r.data),
 };
 
+// ─── Inventory ERP APIs ──────────────────────────────────────
+
+export const subRecipesApi = {
+  list: () => apiClient.get('/subrecipes').then(r => r.data),
+  get: (id) => apiClient.get(`/subrecipes/${id}`).then(r => r.data),
+  create: (data) => apiClient.post('/subrecipes', data).then(r => r.data),
+  stocks: (branchId) => apiClient.get('/subrecipes/stocks', { params: { branchId } }).then(r => r.data),
+};
+
+export const productionApi = {
+  listBatches: (params = {}) => apiClient.get('/production/batches', { params }).then(r => r.data),
+  getBatch: (id) => apiClient.get(`/production/batches/${id}`).then(r => r.data),
+  createBatch: (data) => apiClient.post('/production/batches', data).then(r => r.data),
+  startBatch: (id) => apiClient.post(`/production/batches/${id}/start`).then(r => r.data),
+  completeBatch: (id, data) => apiClient.post(`/production/batches/${id}/complete`, data).then(r => r.data),
+  postBatch: (id, data = {}) => apiClient.post(`/production/batches/${id}/post`, data).then(r => r.data),
+  cancelBatch: (id, data) => apiClient.post(`/production/batches/${id}/cancel`, data).then(r => r.data),
+};
+
+export const reservoirsApi = {
+  list: (branchId) => apiClient.get('/equipmentreservoirs', { params: { branchId } }).then(r => r.data),
+  create: (data) => apiClient.post('/equipmentreservoirs', data).then(r => r.data),
+  transferIn: (data) => apiClient.post('/equipmentreservoirs/transfer-in', data).then(r => r.data),
+  discardSludge: (data) => apiClient.post('/equipmentreservoirs/discard-sludge', data).then(r => r.data),
+  fullDrain: (data) => apiClient.post('/equipmentreservoirs/full-drain', data).then(r => r.data),
+};
+
+export const inventoryLotsApi = {
+  list: (params = {}) => apiClient.get('/inventorylots', { params }).then(r => r.data),
+  quarantine: (data) => apiClient.post('/inventorylots/quarantine', data).then(r => r.data),
+};
+
+export const finishedProductStocksApi = {
+  list: (branchId) => apiClient.get('/inventory/finished-products', { params: { branchId } }).then(r => r.data),
+};
+
+export const uomConversionsApi = {
+  list: (ingredientId) => apiClient.get('/uomconversions', { params: ingredientId ? { ingredientId } : {} }).then(r => r.data),
+  create: (data) => apiClient.post('/uomconversions', data).then(r => r.data),
+};
+
+// ─── Table Reservations API ─────────────────────────────────
+export const reservationsApi = {
+  create: (data) => apiClient.post('/reservations', data).then(r => r.data),
+  list: (params = {}) => apiClient.get('/reservations', { params }).then(r => r.data),
+  getById: (id) => apiClient.get(`/reservations/${id}`).then(r => r.data),
+  confirm: (id, data) => apiClient.put(`/reservations/${id}/confirm`, data).then(r => r.data),
+  reject: (id, data) => apiClient.put(`/reservations/${id}/reject`, data).then(r => r.data),
+  seat: (id) => apiClient.put(`/reservations/${id}/seat`).then(r => r.data),
+  complete: (id) => apiClient.put(`/reservations/${id}/complete`).then(r => r.data),
+  cancel: (id, reason) => apiClient.put(`/reservations/${id}/cancel`, null, { params: { reason } }).then(r => r.data),
+};
+
+// ─── Cash Shifts (Z-Report) API ─────────────────────────────
+export const cashShiftsApi = {
+  open: (data) => apiClient.post('/cash-shifts/open', data).then(r => r.data),
+  getCurrent: (branchId) => apiClient.get('/cash-shifts/current', { params: { branchId } }).then(r => r.data),
+  cashDrop: (id, data) => apiClient.post(`/cash-shifts/${id}/cash-drop`, data).then(r => r.data),
+  close: (id, data) => apiClient.post(`/cash-shifts/${id}/close`, data).then(r => r.data),
+  list: (params = {}) => apiClient.get('/cash-shifts', { params }).then(r => r.data),
+};
+
 export default apiClient;

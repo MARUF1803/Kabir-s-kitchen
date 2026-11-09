@@ -7,7 +7,7 @@ import apiClient, { bannersApi, mapMenuItemToProduct, promotionsApi, resolveApiU
 
 const HERO_PRODUCT_COUNT = 10;
 const PRODUCT_PAGE_SIZE = 100;
-const CATEGORY_PREVIEW_PAGE_SIZE = 10;
+const CATEGORY_PREVIEW_PAGE_SIZE = 4;
 
 const getHeroImageKey = imageUrl => String(imageUrl || '').split('?')[0].toLowerCase();
 const getSafeBannerLink = link => {
@@ -834,12 +834,35 @@ export default function StorefrontPage({ onSelectProduct, onOpenCakeCustomizer, 
           <div className="menu-category-groups">
             {menuProductGroups.map(group => (
               <section className="menu-category-group" key={group.slug} aria-labelledby={`menu-category-${group.slug}`}>
-                <div className="menu-category-group__heading">
-                  <h3 id={`menu-category-${group.slug}`}>{group.name}</h3>
-                  <span>{group.products.length === group.totalCount ? `${group.totalCount} items` : `Showing ${group.products.length} of ${group.totalCount} items`}</span>
+                <div className="menu-category-group__heading" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+                  <h3 id={`menu-category-${group.slug}`} style={{ margin: 0, fontSize: '1.4rem' }}>{group.name}</h3>
+                  {group.totalCount > 4 && (
+                    <button
+                      type="button"
+                      className="view-all-category-btn"
+                      onClick={() => handleSelectCategory(group.slug)}
+                      style={{
+                        background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
+                        border: '1.5px solid #ea580c',
+                        color: '#c2410c',
+                        padding: '6px 18px',
+                        borderRadius: '24px',
+                        fontSize: '0.84rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        boxShadow: '0 2px 6px rgba(234, 88, 12, 0.1)',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      View All <ChevronRight size={15} style={{ strokeWidth: 2.5 }} />
+                    </button>
+                  )}
                 </div>
                 <div className="product-grid">
-                  {group.products.map(product => (
+                  {group.products.slice(0, 4).map(product => (
                     <ProductCard
                       key={product.id}
                       product={product}
@@ -852,15 +875,45 @@ export default function StorefrontPage({ onSelectProduct, onOpenCakeCustomizer, 
             ))}
           </div>
         ) : (
-          <div className="product-grid">
-            {filteredProducts.map(product => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onSelectProduct={onSelectProduct}
-                onOpenCakeCustomizer={onOpenCakeCustomizer}
-              />
-            ))}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '22px', padding: '14px 20px', background: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+              <div>
+                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Category</span>
+                <h3 style={{ margin: '2px 0 0', color: '#0f172a', fontSize: '1.35rem', fontFamily: "'Playfair Display', Georgia, serif" }}>
+                  {currentCategoryObj?.name || activeCategory}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleSelectCategory('all')}
+                style={{
+                  background: '#f8fafc',
+                  border: '1.5px solid #cbd5e1',
+                  color: '#334155',
+                  padding: '7px 18px',
+                  borderRadius: '10px',
+                  fontSize: '0.84rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                ← Back to All Categories
+              </button>
+            </div>
+            <div className="product-grid">
+              {filteredProducts.map(product => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onSelectProduct={onSelectProduct}
+                  onOpenCakeCustomizer={onOpenCakeCustomizer}
+                />
+              ))}
+            </div>
           </div>
         ) : (
           <div className="empty-state">

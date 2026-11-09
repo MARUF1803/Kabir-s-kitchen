@@ -29,14 +29,45 @@ public record SalesSummaryDto(
     decimal TotalOutstanding,
     decimal TotalRefunded,
     int VoidOrderCount,
-    decimal VoidTotalAmount
+    decimal VoidTotalAmount,
+    decimal TotalCOGS = 0,
+    decimal TotalWastageCost = 0,
+    decimal TotalPackagingCost = 0,
+    decimal TotalDeliveryCost = 0,
+    decimal TotalExpenses = 0,
+    decimal TotalGrossProfit = 0,
+    decimal GrossProfitMarginPercent = 0
 );
 
-public record SalesByBranchDto(long BranchId, string BranchName, int OrderCount, decimal TotalSales);
+public record SalesByBranchDto(long BranchId, string BranchName, int OrderCount, decimal TotalSales, decimal PercentageOfTotal = 0);
 public record SalesBySourceDto(OrderType OrderType, string SourceName, int OrderCount, decimal TotalSales);
 public record SalesByPaymentMethodDto(PaymentMethod Method, string MethodName, int TransactionCount, decimal TotalAmount);
 public record SalesByCategoryDto(string CategoryName, int QuantitySold, decimal TotalRevenue);
 public record CashierShiftSummaryDto(string CashierName, int OrderCount, decimal TotalSales, decimal CashCollected, decimal DigitalCollected);
+
+public record ProductPerformanceDto(
+    long MenuItemId,
+    string ProductName,
+    string CategoryName,
+    int QuantitySold,
+    decimal TotalRevenue,
+    decimal PercentageOfSales
+);
+
+public record SalesByTimeDto(
+    string PeriodKey,
+    string DisplayLabel,
+    int OrderCount,
+    decimal TotalSales,
+    decimal AverageTicket
+);
+
+public record ExpenseHeadDto(
+    string ExpenseCategory,
+    string Description,
+    decimal Amount,
+    decimal PercentageOfRevenue
+);
 
 public record SalesReportResponseDto(
     DateTime GeneratedAtUtc,
@@ -48,7 +79,16 @@ public record SalesReportResponseDto(
     List<SalesByPaymentMethodDto> ByPaymentMethod,
     List<SalesByCategoryDto> ByCategory,
     List<CashierShiftSummaryDto> CashierSummaries,
-    List<OrderResponseDto> RecentOrders
+    List<OrderResponseDto> RecentOrders,
+    List<ProductPerformanceDto> TopSellingProducts,
+    List<ProductPerformanceDto> LowSellingProducts,
+    List<SalesByTimeDto> ByMonth,
+    List<SalesByTimeDto> ByDayOfWeek,
+    List<SalesByTimeDto> DailyTimeline,
+    List<ExpenseHeadDto> CostBreakdown,
+    string PeakSalesDay,
+    string SlowestSalesDay,
+    string BestPerformingBranch
 );
 
 public class SalesReportService
@@ -106,6 +146,26 @@ public class SalesReportService
         int voidCount = voidOrders.Count;
         decimal voidAmount = voidOrders.Sum(o => o.TotalAmount);
 
+        // Cost and Expense Computations
+        decimal totalCOGS = validOrders.Sum(o => o.TotalIngredientBOMCost);
+        decimal totalPackaging = validOrders.Sum(o => o.PackagingCost);
+        decimal totalDeliveryCost = validOrders.Sum(o => o.DeliveryCost);
+
+        // Wastage Loss query
+        var wastageQuery = _context.WastageRecords
+            .Where(w => w.CreatedAtUtc >= fromDate && w.CreatedAtUtc <= toDate)
+            .AsNoTracking();
+        if (filter.BranchId.HasValue && filter.BranchId.Value > 0)
+        {
+            wastageQuery = wastageQuery.Where(w => w.BranchId == filter.BranchId.Value);
+        }
+        var wastageRecords = await wastageQuery.ToListAsync();
+        decimal totalWastageCost = wastageRecords.Sum(w => w.QuantityWasted * w.UnitCostAtWastage);
+
+        decimal totalExpenses = totalCOGS + totalWastageCost + totalPackaging + totalDeliveryCost;
+        decimal totalGrossProfit = (grossSales - totalDiscounts) - totalExpenses;
+        decimal profitMarginPercent = grossSales > 0 ? Math.Round((totalGrossProfit / grossSales) * 100, 2) : 0;
+
         var summary = new SalesSummaryDto(
             GrossSales: grossSales,
             TotalDiscounts: totalDiscounts,
@@ -119,15 +179,28 @@ public class SalesReportService
             TotalOutstanding: totalOutstanding,
             TotalRefunded: totalRefunded,
             VoidOrderCount: voidCount,
-            VoidTotalAmount: voidAmount
+            VoidTotalAmount: voidAmount,
+            TotalCOGS: totalCOGS,
+            TotalWastageCost: totalWastageCost,
+            TotalPackagingCost: totalPackaging,
+            TotalDeliveryCost: totalDeliveryCost,
+            TotalExpenses: totalExpenses,
+            TotalGrossProfit: totalGrossProfit,
+            GrossProfitMarginPercent: profitMarginPercent
         );
 
         // 2. By Branch
         var byBranch = validOrders
             .GroupBy(o => new { o.BranchId, BranchName = o.Branch?.Name ?? $"Branch #{o.BranchId}" })
-            .Select(g => new SalesByBranchDto(g.Key.BranchId, g.Key.BranchName, g.Count(), g.Sum(o => o.TotalAmount)))
+            .Select(g => {
+                var branchSales = g.Sum(o => o.TotalAmount);
+                var pct = netSales > 0 ? Math.Round((branchSales / netSales) * 100, 1) : 0;
+                return new SalesByBranchDto(g.Key.BranchId, g.Key.BranchName, g.Count(), branchSales, pct);
+            })
             .OrderByDescending(b => b.TotalSales)
             .ToList();
+
+        string bestBranch = byBranch.FirstOrDefault()?.BranchName ?? "N/A";
 
         // 3. By Source
         var bySource = validOrders
@@ -150,7 +223,7 @@ public class SalesReportService
             .GroupBy(i => i.MenuItem?.Category?.Name ?? "General Menu")
             .Select(g => new SalesByCategoryDto(g.Key, g.Sum(i => i.Quantity), g.Sum(i => i.UnitPrice * i.Quantity)))
             .OrderByDescending(c => c.TotalRevenue)
-            .Take(10)
+            .Take(15)
             .ToList();
 
         // 6. Cashier Summaries
@@ -165,7 +238,71 @@ public class SalesReportService
             .OrderByDescending(c => c.TotalSales)
             .ToList();
 
-        // 7. Recent Orders
+        // 7. Product Performance: Top Selling & Low Selling Products
+        var productGroups = allItems
+            .GroupBy(i => new { i.MenuItemId, Name = i.MenuItem?.Name ?? "Unknown Item", Category = i.MenuItem?.Category?.Name ?? "Menu" })
+            .Select(g => {
+                var qty = g.Sum(i => i.Quantity);
+                var rev = g.Sum(i => i.UnitPrice * i.Quantity);
+                var pct = netSales > 0 ? Math.Round((rev / netSales) * 100, 2) : 0;
+                return new ProductPerformanceDto(g.Key.MenuItemId, g.Key.Name, g.Key.Category, qty, rev, pct);
+            })
+            .ToList();
+
+        var topProducts = productGroups.OrderByDescending(p => p.QuantitySold).Take(10).ToList();
+        var lowProducts = productGroups.OrderBy(p => p.QuantitySold).Take(10).ToList();
+
+        // 8. Time Breakdown: By Month
+        var byMonth = validOrders
+            .GroupBy(o => o.CreatedAtUtc.ToString("yyyy-MM"))
+            .OrderBy(g => g.Key)
+            .Select(g => {
+                var mSales = g.Sum(o => o.TotalAmount);
+                var mCount = g.Count();
+                var label = DateTime.TryParseExact(g.Key + "-01", "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt)
+                    ? dt.ToString("MMM yyyy")
+                    : g.Key;
+                return new SalesByTimeDto(g.Key, label, mCount, mSales, mCount > 0 ? Math.Round(mSales / mCount, 2) : 0);
+            })
+            .ToList();
+
+        // 9. Time Breakdown: By Day of Week (Sun-Sat)
+        var daysOrder = new[] { DayOfWeek.Sunday, DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday };
+        var byDayOfWeek = daysOrder
+            .Select(d => {
+                var dayOrders = validOrders.Where(o => o.CreatedAtUtc.DayOfWeek == d).ToList();
+                var dSales = dayOrders.Sum(o => o.TotalAmount);
+                var dCount = dayOrders.Count;
+                return new SalesByTimeDto(d.ToString(), d.ToString(), dCount, dSales, dCount > 0 ? Math.Round(dSales / dCount, 2) : 0);
+            })
+            .ToList();
+
+        var peakDay = byDayOfWeek.OrderByDescending(d => d.TotalSales).FirstOrDefault()?.DisplayLabel ?? "N/A";
+        var slowestDay = byDayOfWeek.OrderBy(d => d.TotalSales).FirstOrDefault()?.DisplayLabel ?? "N/A";
+
+        // 10. Daily Timeline (last 30 days or filtered range)
+        var dailyTimeline = validOrders
+            .GroupBy(o => o.CreatedAtUtc.Date)
+            .OrderBy(g => g.Key)
+            .Select(g => {
+                var dSales = g.Sum(o => o.TotalAmount);
+                var dCount = g.Count();
+                return new SalesByTimeDto(g.Key.ToString("yyyy-MM-dd"), g.Key.ToString("dd MMM"), dCount, dSales, dCount > 0 ? Math.Round(dSales / dCount, 2) : 0);
+            })
+            .ToList();
+
+        // 11. Cost & Expense Breakdown by Head
+        var costBreakdown = new List<ExpenseHeadDto>
+        {
+            new("Food Ingredients (BOM COGS)", "Direct cost of raw materials and ingredients consumed in recipes", totalCOGS, grossSales > 0 ? Math.Round((totalCOGS / grossSales) * 100, 1) : 0),
+            new("Kitchen Wastage & Spoilage", "Cost of expired, burnt, or quality failed ingredients", totalWastageCost, grossSales > 0 ? Math.Round((totalWastageCost / grossSales) * 100, 1) : 0),
+            new("Packaging Materials", "Food containers, bags, boxes, and cutlery for takeaway/delivery", totalPackaging, grossSales > 0 ? Math.Round((totalPackaging / grossSales) * 100, 1) : 0),
+            new("Rider Logistics & Delivery", "Direct logistics and fuel allowance cost for delivery riders", totalDeliveryCost, grossSales > 0 ? Math.Round((totalDeliveryCost / grossSales) * 100, 1) : 0),
+            new("Promotional Discounts Given", "Reductions from coupon codes and campaign offers", totalDiscounts, grossSales > 0 ? Math.Round((totalDiscounts / grossSales) * 100, 1) : 0),
+            new("Govt VAT (5%)", "Statutory value-added tax collected and transferred to NBR", totalTax, grossSales > 0 ? Math.Round((totalTax / grossSales) * 100, 1) : 0)
+        };
+
+        // 12. Recent Orders
         var recentOrders = validOrders
             .OrderByDescending(o => o.CreatedAtUtc)
             .Take(50)
@@ -211,7 +348,16 @@ public class SalesReportService
             ByPaymentMethod: byPaymentMethod,
             ByCategory: byCategory,
             CashierSummaries: cashierSummaries,
-            RecentOrders: recentOrders
+            RecentOrders: recentOrders,
+            TopSellingProducts: topProducts,
+            LowSellingProducts: lowProducts,
+            ByMonth: byMonth,
+            ByDayOfWeek: byDayOfWeek,
+            DailyTimeline: dailyTimeline,
+            CostBreakdown: costBreakdown,
+            PeakSalesDay: peakDay,
+            SlowestSalesDay: slowestDay,
+            BestPerformingBranch: bestBranch
         );
 
         return Result<SalesReportResponseDto>.Success(response);
@@ -220,69 +366,62 @@ public class SalesReportService
     public async Task<Result<string>> GenerateCsvExportAsync(SalesReportFilterDto filter)
     {
         var reportResult = await GetSalesReportAsync(filter);
-        if (reportResult.IsFailure) return Result<string>.Failure(reportResult.Error ?? "Unable to generate sales report.");
+        if (reportResult.IsFailure) return Result<string>.Failure(reportResult.Error ?? "Failed to generate report");
 
         var report = reportResult.Value;
         var sb = new StringBuilder();
 
-        sb.AppendLine("KABIR'S KITCHEN - OFFICIAL SALES REPORT");
-        sb.AppendLine($"Generated At: {report.GeneratedAtUtc:yyyy-MM-dd HH:mm:ss} UTC");
-        sb.AppendLine($"Period: {report.FromDateUtc:yyyy-MM-dd} to {report.ToDateUtc:yyyy-MM-dd}");
+        sb.AppendLine("=== KABIR'S KITCHEN - OFFICIAL SALES REPORT ===");
+        sb.AppendLine($"Generated At (UTC):,{report.GeneratedAtUtc:yyyy-MM-dd HH:mm:ss}");
+        sb.AppendLine($"Reporting Period:,{report.FromDateUtc:yyyy-MM-dd} to {report.ToDateUtc:yyyy-MM-dd}");
         sb.AppendLine();
 
-        sb.AppendLine("SUMMARY METRICS");
-        sb.AppendLine("Metric,Value (BDT)");
+        sb.AppendLine("=== EXECUTIVE SUMMARY & P&L ===");
+        sb.AppendLine("Metric,Amount (BDT)");
         sb.AppendLine($"Gross Sales,{report.Summary.GrossSales:F2}");
-        sb.AppendLine($"Total Discounts,{report.Summary.TotalDiscounts:F2}");
-        sb.AppendLine($"Total Tax (VAT 5%),{report.Summary.TotalTax:F2}");
-        sb.AppendLine($"Total Delivery Fees,{report.Summary.TotalDeliveryFees:F2}");
+        sb.AppendLine($"Discounts Allowed,-{report.Summary.TotalDiscounts:F2}");
+        sb.AppendLine($"Govt Tax (VAT 5%),{report.Summary.TotalTax:F2}");
         sb.AppendLine($"Net Sales Total,{report.Summary.NetSales:F2}");
-        sb.AppendLine($"Total Completed Orders,{report.Summary.TotalOrders}");
+        sb.AppendLine($"Ingredient BOM Cost (COGS),{report.Summary.TotalCOGS:F2}");
+        sb.AppendLine($"Kitchen Wastage Cost,{report.Summary.TotalWastageCost:F2}");
+        sb.AppendLine($"Packaging Expenses,{report.Summary.TotalPackagingCost:F2}");
+        sb.AppendLine($"Delivery Logistics Cost,{report.Summary.TotalDeliveryCost:F2}");
+        sb.AppendLine($"Total Operating Expenses,{report.Summary.TotalExpenses:F2}");
+        sb.AppendLine($"Estimated Gross Profit,{report.Summary.TotalGrossProfit:F2}");
+        sb.AppendLine($"Gross Profit Margin (%),{report.Summary.GrossProfitMarginPercent:F2}%");
+        sb.AppendLine($"Total Orders Completed,{report.Summary.TotalOrders}");
         sb.AppendLine($"Average Order Value (AOV),{report.Summary.AverageOrderValue:F2}");
-        sb.AppendLine($"Total Collected Payments,{report.Summary.TotalCollected:F2}");
-        sb.AppendLine($"Outstanding Customer Due,{report.Summary.TotalOutstanding:F2}");
-        sb.AppendLine($"Total Refunded,{report.Summary.TotalRefunded:F2}");
-        sb.AppendLine($"Void Orders Count,{report.Summary.VoidOrderCount}");
-        sb.AppendLine($"Void Total Amount,{report.Summary.VoidTotalAmount:F2}");
         sb.AppendLine();
 
-        sb.AppendLine("SALES BY CHANNEL");
-        sb.AppendLine("Channel,Orders,Total (BDT)");
-        foreach (var s in report.BySource)
+        sb.AppendLine("=== TOP SELLING PRODUCTS ===");
+        sb.AppendLine("Product Name,Category,Quantity Sold,Total Revenue (BDT),% Share");
+        foreach (var p in report.TopSellingProducts)
         {
-            sb.AppendLine($"{s.SourceName},{s.OrderCount},{s.TotalSales:F2}");
+            sb.AppendLine($"\"{p.ProductName}\",\"{p.CategoryName}\",{p.QuantitySold},{p.TotalRevenue:F2},{p.PercentageOfSales}%");
         }
         sb.AppendLine();
 
-        sb.AppendLine("SALES BY BRANCH");
-        sb.AppendLine("Branch Name,Orders,Total (BDT)");
+        sb.AppendLine("=== LOW SELLING PRODUCTS (ATTENTION NEEDED) ===");
+        sb.AppendLine("Product Name,Category,Quantity Sold,Total Revenue (BDT),% Share");
+        foreach (var p in report.LowSellingProducts)
+        {
+            sb.AppendLine($"\"{p.ProductName}\",\"{p.CategoryName}\",{p.QuantitySold},{p.TotalRevenue:F2},{p.PercentageOfSales}%");
+        }
+        sb.AppendLine();
+
+        sb.AppendLine("=== BRANCH PERFORMANCE RANKING ===");
+        sb.AppendLine("Branch Name,Order Count,Total Sales (BDT),% of Total Revenue");
         foreach (var b in report.ByBranch)
         {
-            sb.AppendLine($"\"{b.BranchName}\",{b.OrderCount},{b.TotalSales:F2}");
+            sb.AppendLine($"\"{b.BranchName}\",{b.OrderCount},{b.TotalSales:F2},{b.PercentageOfTotal}%");
         }
         sb.AppendLine();
 
-        sb.AppendLine("SALES BY PAYMENT METHOD");
-        sb.AppendLine("Payment Method,Transactions,Total (BDT)");
-        foreach (var p in report.ByPaymentMethod)
+        sb.AppendLine("=== SALES BY DAY OF WEEK ===");
+        sb.AppendLine("Day of Week,Orders,Total Sales (BDT),Average Ticket (BDT)");
+        foreach (var d in report.ByDayOfWeek)
         {
-            sb.AppendLine($"{p.MethodName},{p.TransactionCount},{p.TotalAmount:F2}");
-        }
-        sb.AppendLine();
-
-        sb.AppendLine("CASHIER & SHIFT CLOSING");
-        sb.AppendLine("Cashier,Orders,Total Sales (BDT),Cash Collected (BDT),Digital Collected (BDT)");
-        foreach (var c in report.CashierSummaries)
-        {
-            sb.AppendLine($"\"{c.CashierName}\",{c.OrderCount},{c.TotalSales:F2},{c.CashCollected:F2},{c.DigitalCollected:F2}");
-        }
-        sb.AppendLine();
-
-        sb.AppendLine("RECENT ORDERS RECORD");
-        sb.AppendLine("Invoice Number,Order Number,Branch,Date,Type,Customer,Phone,Total (BDT),Paid (BDT),Due (BDT),Status");
-        foreach (var o in report.RecentOrders)
-        {
-            sb.AppendLine($"{o.InvoiceNumber},{o.OrderNumber},\"{o.BranchName}\",{o.CreatedAtUtc:yyyy-MM-dd HH:mm},{o.OrderType},\"{o.CustomerName}\",{o.CustomerPhone},{o.TotalAmount:F2},{o.PaidAmount:F2},{o.OutstandingAmount:F2},{o.PaymentStatus}");
+            sb.AppendLine($"{d.DisplayLabel},{d.OrderCount},{d.TotalSales:F2},{d.AverageTicket:F2}");
         }
 
         return Result<string>.Success(sb.ToString());

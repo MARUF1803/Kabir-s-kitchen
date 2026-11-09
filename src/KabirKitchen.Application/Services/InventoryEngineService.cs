@@ -103,7 +103,9 @@ public class InventoryEngineService
     }
 
     /// <summary>
-    /// Deducts all ingredients required for an order based on recipes.
+    /// Deducts inventory for an order based on production type and recipes:
+    /// - BatchProduced items: deduct from BranchProductStock and allocate from finished product lots (FEFO). Raw ingredients are NOT deducted.
+    /// - MadeToOrder items: deduct required raw ingredients from BranchIngredientStock. If an ingredient is a SubRecipe, deduct from BranchSubRecipeStock without double-deducting its sub-ingredients.
     /// </summary>
     public async Task<Result> DeductIngredientsForOrderAsync(Order order)
     {
@@ -112,27 +114,159 @@ public class InventoryEngineService
             .Where(oi => oi.OrderId == order.Id)
             .ToListAsync();
 
+        var lotService = new LotManagementService(_context);
+
         foreach (var item in orderItems)
         {
+            if (item.MenuItem == null) continue;
+
+            // ─── 1. BATCH-PRODUCED ITEMS: Deduct finished product stock only ───────────
+            if (item.MenuItem.ProductionType == ProductionType.BatchProduced)
+            {
+                var productStock = await _context.BranchProductStocks
+                    .FirstOrDefaultAsync(s => s.BranchId == order.BranchId &&
+                                              s.MenuItemId == item.MenuItemId &&
+                                              s.MenuItemVariantId == item.MenuItemVariantId);
+
+                if (productStock == null)
+                {
+                    productStock = new BranchProductStock
+                    {
+                        BranchId = order.BranchId,
+                        MenuItemId = item.MenuItemId,
+                        MenuItemVariantId = item.MenuItemVariantId,
+                        CurrentStockQuantity = 0,
+                        ReservedQuantity = 0,
+                        QuarantinedQuantity = 0,
+                        MovingAverageCostPerUnit = 0
+                    };
+                    _context.BranchProductStocks.Add(productStock);
+                }
+
+                decimal qtyBefore = productStock.CurrentStockQuantity;
+                productStock.CurrentStockQuantity -= item.Quantity;
+                productStock.UpdatedAtUtc = DateTime.UtcNow;
+
+                var productTxn = new ProductStockTransaction
+                {
+                    BranchId = order.BranchId,
+                    MenuItemId = item.MenuItemId,
+                    MenuItemVariantId = item.MenuItemVariantId,
+                    BranchProductStockId = productStock.Id,
+                    TransactionType = ProductStockTransactionType.PosSale,
+                    QuantityChange = -item.Quantity,
+                    QuantityBefore = qtyBefore,
+                    QuantityAfter = productStock.CurrentStockQuantity,
+                    UnitUsed = UnitType.Piece,
+                    UnitCostAtTransaction = productStock.MovingAverageCostPerUnit,
+                    TotalCost = item.Quantity * productStock.MovingAverageCostPerUnit,
+                    OrderId = order.Id,
+                    ReferenceDocumentType = "Order",
+                    ReferenceDocumentNumber = order.OrderNumber,
+                    Remarks = $"POS sale: {item.Quantity}x {item.ItemName}",
+                    TransactionDateUtc = DateTime.UtcNow
+                };
+                _context.ProductStockTransactions.Add(productTxn);
+                await _context.SaveChangesAsync();
+
+                // Allocate from finished product lots (FEFO)
+                var allocResult = await lotService.AllocateFinishedProductFefoAsync(
+                    order.BranchId, item.MenuItemId, item.Quantity, productTxn.Id);
+                if (allocResult.IsSuccess)
+                {
+                    foreach (var alloc in allocResult.Value)
+                        _context.ProductLotAllocations.Add(alloc);
+                    await _context.SaveChangesAsync();
+                }
+
+                // BatchProduced item stock has been deducted. Do NOT deduct raw ingredients.
+                continue;
+            }
+
+            // ─── 2. MADE-TO-ORDER ITEMS: Deduct raw materials and sub-recipes ─────────
             var recipe = await _context.Recipes
                 .Include(r => r.Ingredients)
                     .ThenInclude(ri => ri.Ingredient)
+                .Include(r => r.Ingredients)
+                    .ThenInclude(ri => ri.SubRecipe)
                 .FirstOrDefaultAsync(r => r.MenuItemId == item.MenuItemId && r.MenuItemVariantId == item.MenuItemVariantId);
 
             if (recipe == null) continue;
 
             foreach (var ri in recipe.Ingredients)
             {
+                decimal totalQtyForPortions = (ri.QuantityRequired * item.Quantity) / (recipe.YieldServings > 0 ? recipe.YieldServings : 1);
+
+                // If linked to a SubRecipe: deduct intermediate stock from BranchSubRecipeStock
+                if (ri.SubRecipeId.HasValue && ri.SubRecipe != null)
+                {
+                    decimal subQtyBase = UnitConverter.ConvertToBaseUnit(totalQtyForPortions, ri.UnitUsed, ri.SubRecipe.BaseUnit);
+
+                    var subStock = await _context.BranchSubRecipeStocks
+                        .FirstOrDefaultAsync(s => s.BranchId == order.BranchId && s.SubRecipeId == ri.SubRecipeId.Value);
+
+                    if (subStock == null)
+                    {
+                        subStock = new BranchSubRecipeStock
+                        {
+                            BranchId = order.BranchId,
+                            SubRecipeId = ri.SubRecipeId.Value,
+                            CurrentStockQuantity = 0,
+                            ReservedQuantity = 0,
+                            QuarantinedQuantity = 0,
+                            MovingAverageCostPerUnit = 0
+                        };
+                        _context.BranchSubRecipeStocks.Add(subStock);
+                    }
+
+                    decimal subBefore = subStock.CurrentStockQuantity;
+                    subStock.CurrentStockQuantity -= subQtyBase;
+                    subStock.UpdatedAtUtc = DateTime.UtcNow;
+
+                    var subTxn = new SubRecipeStockTransaction
+                    {
+                        BranchId = order.BranchId,
+                        SubRecipeId = ri.SubRecipeId.Value,
+                        BranchSubRecipeStockId = subStock.Id,
+                        TransactionType = SubRecipeTransactionType.ParentRecipeConsumption,
+                        QuantityChange = -subQtyBase,
+                        QuantityBefore = subBefore,
+                        QuantityAfter = subStock.CurrentStockQuantity,
+                        UnitUsed = ri.SubRecipe.BaseUnit,
+                        UnitCostAtTransaction = subStock.MovingAverageCostPerUnit,
+                        TotalCost = subQtyBase * subStock.MovingAverageCostPerUnit,
+                        ParentOrderId = order.Id,
+                        ReferenceDocumentType = "Order",
+                        ReferenceDocumentNumber = order.OrderNumber,
+                        Remarks = $"Consumption for {item.Quantity}x {item.ItemName}",
+                        TransactionDateUtc = DateTime.UtcNow
+                    };
+                    _context.SubRecipeStockTransactions.Add(subTxn);
+                    await _context.SaveChangesAsync();
+
+                    // FEFO lot allocation for sub-recipe
+                    var subAlloc = await lotService.AllocateSubRecipeFefoAsync(
+                        order.BranchId, ri.SubRecipeId.Value, subQtyBase, subTxn.Id);
+                    if (subAlloc.IsSuccess)
+                    {
+                        foreach (var a in subAlloc.Value)
+                            _context.SubRecipeLotAllocations.Add(a);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    // Nested ingredients of already-produced sub-recipe are NOT deducted again.
+                    continue;
+                }
+
+                // Raw ingredient deduction
                 if (ri.Ingredient == null) continue;
 
-                // Total quantity for all portions of this item
-                decimal totalQtyForPortions = (ri.QuantityRequired * item.Quantity) / (recipe.YieldServings > 0 ? recipe.YieldServings : 1);
                 decimal qtyInBaseUnit = UnitConverter.ConvertToBaseUnit(totalQtyForPortions, ri.UnitUsed, ri.Ingredient.BaseUnit);
                 
                 // Add preparation loss factor
                 qtyInBaseUnit *= (1.0m + ri.WastagePreparationLossPercent / 100.0m);
 
-                await RecordStockTransactionAsync(
+                var rawTxnResult = await RecordStockTransactionAsync(
                     branchId: order.BranchId,
                     ingredientId: ri.IngredientId,
                     transactionType: StockTransactionType.RecipeConsumption,
@@ -144,6 +278,19 @@ public class InventoryEngineService
                     remarks: $"Consumption for {item.Quantity}x {item.ItemName}",
                     performedByUserId: null
                 );
+
+                if (rawTxnResult.IsSuccess)
+                {
+                    // Allocate FEFO lots for raw ingredient
+                    var rawAlloc = await lotService.AllocateRawMaterialFefoAsync(
+                        order.BranchId, ri.IngredientId, qtyInBaseUnit, rawTxnResult.Value.Id);
+                    if (rawAlloc.IsSuccess)
+                    {
+                        foreach (var a in rawAlloc.Value)
+                            _context.IngredientLotAllocations.Add(a);
+                        await _context.SaveChangesAsync();
+                    }
+                }
             }
         }
 

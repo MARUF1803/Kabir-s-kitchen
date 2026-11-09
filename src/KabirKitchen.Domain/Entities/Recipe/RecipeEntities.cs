@@ -42,8 +42,15 @@ public class RecipeIngredient : BaseEntity
     public long RecipeId { get; set; }
     public Recipe? Recipe { get; set; }
 
+    // Raw ingredient (existing — keep IngredientId required for backward compat, but allow SubRecipeId as alternative)
     public long IngredientId { get; set; }
     public Ingredient? Ingredient { get; set; }
+
+    // Optional: link to a sub-recipe component instead of a raw ingredient.
+    // When SubRecipeId is set, IngredientId references a placeholder "sub-recipe marker" ingredient.
+    // The actual consumption deducts from BranchSubRecipeStock.
+    public long? SubRecipeId { get; set; }
+    public SubRecipe? SubRecipe { get; set; }
 
     public decimal QuantityRequired { get; set; } // e.g., 80 (if grams) or 0.08 (if kg)
     public UnitType UnitUsed { get; set; } = UnitType.Gram;

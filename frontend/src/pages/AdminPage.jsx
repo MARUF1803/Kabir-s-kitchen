@@ -12,9 +12,12 @@ import CampaignManagementAdmin from '../components/CampaignManagementAdmin';
 import SalesReportAdmin from '../components/SalesReportAdmin';
 import ProcurementAdmin from '../components/ProcurementAdmin';
 import SupportAdmin from '../components/SupportAdmin';
+import InventoryErpAdmin from '../components/InventoryErpAdmin';
+import ReservationAdmin from '../components/ReservationAdmin';
+import CashShiftAdmin from '../components/CashShiftAdmin';
 import { usersApi, reportsApi, inventoryAdjustApi, inventoryApi, ordersApi } from '../services/api';
 
-const TABS = ['Overview', 'Orders', 'Promotions', 'Campaigns', 'Products', 'Inventory', 'Procurement', 'Staff', 'Reports', 'Support'];
+const TABS = ['Overview', 'Orders', 'Cash Shifts', 'Reservations', 'Production ERP', 'Promotions', 'Campaigns', 'Products', 'Inventory', 'Procurement', 'Staff', 'Reports', 'Support'];
 
 const STATUS_COLORS = {
   Confirmed:      { bg: '#dbeafe', color: '#1d4ed8' },
@@ -479,6 +482,21 @@ export default function AdminPage() {
               </table>
             </div>
           </div>
+        )}
+
+        {/* ── Production ERP Tab ── */}
+        {tab === 'Production ERP' && (
+          <InventoryErpAdmin activeBranchId={activeBranchId} />
+        )}
+
+        {/* ── Cash Shifts / Z-Report Tab ── */}
+        {tab === 'Cash Shifts' && (
+          <CashShiftAdmin activeBranchId={activeBranchId} />
+        )}
+
+        {/* ── Table Reservations Tab ── */}
+        {tab === 'Reservations' && (
+          <ReservationAdmin activeBranchId={activeBranchId} />
         )}
 
         {/* ── Inventory Tab ── */}

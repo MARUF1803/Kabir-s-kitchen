@@ -406,6 +406,9 @@ namespace KabirKitchen.Infrastructure.Migrations
                     b.Property<int>("PreparationTimeMinutes")
                         .HasColumnType("int");
 
+                    b.Property<int>("ProductionType")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("Rating")
                         .HasColumnType("decimal(18,2)");
 
@@ -688,8 +691,16 @@ namespace KabirKitchen.Infrastructure.Migrations
                     b.Property<decimal>("MovingAverageCostPerUnit")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<decimal>("QuarantinedQuantity")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<decimal>("ReservedQuantity")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.Property<DateTime?>("UpdatedAtUtc")
                         .HasColumnType("datetime2");
@@ -750,6 +761,531 @@ namespace KabirKitchen.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("BranchMenuItemOverrides");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Inventory.BranchProductStock", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("BranchId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("CurrentStockQuantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<long>("MenuItemId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("MenuItemVariantId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("MinimumAlertStock")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("MovingAverageCostPerUnit")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("QuarantinedQuantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("ReservedQuantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MenuItemId");
+
+                    b.HasIndex("BranchId", "MenuItemId", "MenuItemVariantId")
+                        .IsUnique()
+                        .HasFilter("[MenuItemVariantId] IS NOT NULL");
+
+                    b.ToTable("BranchProductStocks");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Inventory.BranchSubRecipeStock", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("BranchId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("CurrentStockQuantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("MinimumAlertStock")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("MovingAverageCostPerUnit")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("QuarantinedQuantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("ReservedQuantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<long>("SubRecipeId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubRecipeId");
+
+                    b.HasIndex("BranchId", "SubRecipeId")
+                        .IsUnique();
+
+                    b.ToTable("BranchSubRecipeStocks");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Inventory.EquipmentReservoir", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("BranchId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("CurrentFluidQuantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("CurrentUnitCost")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("EquipmentCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EquipmentName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("IngredientId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastCleanedOrReplacedUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("MaxCapacity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("IngredientId");
+
+                    b.ToTable("EquipmentReservoirs", t =>
+                        {
+                            t.HasCheckConstraint("CK_EquipmentReservoir_Capacity", "[CurrentFluidQuantity] >= 0 AND [CurrentFluidQuantity] <= [MaxCapacity]");
+                        });
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Inventory.EquipmentReservoirTransaction", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("EquipmentReservoirId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("PerformedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("ProductionBatchId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("QuantityAfter")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("QuantityBefore")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("QuantityChange")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Remarks")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long?>("SourceInventoryLotId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("StockTransactionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("TransactionDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("TransactionType")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("UnitCostAtTransaction")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("WeightedAverageCostAfter")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EquipmentReservoirId");
+
+                    b.HasIndex("SourceInventoryLotId");
+
+                    b.ToTable("EquipmentReservoirTransactions");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Inventory.IngredientLotAllocation", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<decimal>("AllocatedQuantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("InventoryLotId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("LotRemainingQuantityAfter")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("LotRemainingQuantityBefore")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<long?>("OriginalAllocationId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("StockTransactionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("UnitCostSnapshot")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InventoryLotId");
+
+                    b.HasIndex("OriginalAllocationId");
+
+                    b.HasIndex("StockTransactionId");
+
+                    b.ToTable("IngredientLotAllocations");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Inventory.InventoryLot", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("BranchId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ExpiryDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("HasExpiry")
+                        .HasColumnType("bit");
+
+                    b.Property<long?>("IngredientId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("InitialQuantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("LotNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("LotType")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ManufacturedOrReceivedDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("MenuItemId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("RemainingQuantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("SourceReference")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StorageLocation")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long?>("SubRecipeId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("UnitCost")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("IngredientId");
+
+                    b.HasIndex("MenuItemId");
+
+                    b.HasIndex("SubRecipeId");
+
+                    b.ToTable("InventoryLots", t =>
+                        {
+                            t.HasCheckConstraint("CK_InventoryLot_Balances", "[RemainingQuantity] >= 0");
+
+                            t.HasCheckConstraint("CK_InventoryLot_TypeIntegrity", "([LotType] = 1 AND [IngredientId] IS NOT NULL AND [SubRecipeId] IS NULL AND [MenuItemId] IS NULL) OR ([LotType] = 2 AND [IngredientId] IS NULL AND [SubRecipeId] IS NOT NULL AND [MenuItemId] IS NULL) OR ([LotType] = 3 AND [IngredientId] IS NULL AND [SubRecipeId] IS NULL AND [MenuItemId] IS NOT NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Inventory.ProductLotAllocation", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<decimal>("AllocatedQuantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("InventoryLotId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("LotRemainingQuantityAfter")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("LotRemainingQuantityBefore")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<long?>("OriginalAllocationId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("ProductStockTransactionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("UnitCostSnapshot")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InventoryLotId");
+
+                    b.HasIndex("OriginalAllocationId");
+
+                    b.HasIndex("ProductStockTransactionId");
+
+                    b.ToTable("ProductLotAllocations");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Inventory.ProductStockTransaction", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("BranchId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("BranchProductStockId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("MenuItemId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("MenuItemVariantId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("OrderId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("PerformedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("ProductionBatchId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("QuantityAfter")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("QuantityBefore")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("QuantityChange")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("ReferenceDocumentNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ReferenceDocumentType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Remarks")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long?>("ReversalOfTransactionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("TotalCost")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("TransactionDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("TransactionType")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("UnitCostAtTransaction")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("UnitUsed")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("BranchProductStockId");
+
+                    b.HasIndex("MenuItemId");
+
+                    b.ToTable("ProductStockTransactions");
                 });
 
             modelBuilder.Entity("KabirKitchen.Domain.Entities.Inventory.StockTransaction", b =>
@@ -817,6 +1353,143 @@ namespace KabirKitchen.Infrastructure.Migrations
                     b.ToTable("StockTransactions");
                 });
 
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Inventory.SubRecipeLotAllocation", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<decimal>("AllocatedQuantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("InventoryLotId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("LotRemainingQuantityAfter")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("LotRemainingQuantityBefore")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<long?>("OriginalAllocationId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("SubRecipeStockTransactionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("UnitCostSnapshot")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InventoryLotId");
+
+                    b.HasIndex("OriginalAllocationId");
+
+                    b.HasIndex("SubRecipeStockTransactionId");
+
+                    b.ToTable("SubRecipeLotAllocations");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Inventory.SubRecipeStockTransaction", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("BranchId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("BranchSubRecipeStockId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long?>("ParentOrderId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("PerformedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("ProductionBatchId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("QuantityAfter")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("QuantityBefore")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("QuantityChange")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("ReferenceDocumentNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ReferenceDocumentType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Remarks")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long?>("ReversalOfTransactionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("SubRecipeId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("TotalCost")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("TransactionDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("TransactionType")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("UnitCostAtTransaction")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("UnitUsed")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("BranchSubRecipeStockId");
+
+                    b.HasIndex("SubRecipeId");
+
+                    b.ToTable("SubRecipeStockTransactions");
+                });
+
             modelBuilder.Entity("KabirKitchen.Domain.Entities.Kitchen.KitchenTicket", b =>
                 {
                     b.Property<long>("Id")
@@ -875,6 +1548,86 @@ namespace KabirKitchen.Infrastructure.Migrations
                     b.ToTable("KitchenTickets");
                 });
 
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Kitchen.TableReservation", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("AssignedTableNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("BranchId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("ConfirmedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CustomerEmail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CustomerName")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<string>("CustomerPhone")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<long?>("CustomerUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("GuestCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ReferenceCode")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("ReservationDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SpecialRequests")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("StaffNotes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerUserId");
+
+                    b.HasIndex("ReferenceCode")
+                        .IsUnique();
+
+                    b.HasIndex("BranchId", "ReservationDateUtc", "Status");
+
+                    b.ToTable("TableReservations");
+                });
+
             modelBuilder.Entity("KabirKitchen.Domain.Entities.Kitchen.WastageRecord", b =>
                 {
                     b.Property<long>("Id")
@@ -930,6 +1683,99 @@ namespace KabirKitchen.Infrastructure.Migrations
                     b.HasIndex("IngredientId");
 
                     b.ToTable("WastageRecords");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Orders.CashShift", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<decimal?>("ActualCashCounted")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<long>("BranchId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("CashDropAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("CashierStaffName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("CashierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("ClosedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("ClosingSupervisorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("ExpectedCashInDrawer")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("OpenedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("OpeningFloat")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("ShiftReferenceNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("TotalCardSales")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalCashSales")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalMfsSales")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("VarianceOverShort")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("ZReportNotes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CashierUserId");
+
+                    b.HasIndex("ShiftReferenceNumber")
+                        .IsUnique();
+
+                    b.HasIndex("BranchId", "Status", "OpenedAtUtc");
+
+                    b.ToTable("CashShifts");
                 });
 
             modelBuilder.Entity("KabirKitchen.Domain.Entities.Orders.Order", b =>
@@ -1585,6 +2431,306 @@ namespace KabirKitchen.Infrastructure.Migrations
                     b.ToTable("Suppliers");
                 });
 
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Production.ProductionBatch", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<decimal>("AcceptedQuantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("ActualProducedQuantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<long?>("ApprovedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("BatchNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<long>("BranchId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("CreatedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("IdempotencyKey")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("IsPosted")
+                        .HasColumnType("bit");
+
+                    b.Property<long?>("MenuItemId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("MenuItemVariantId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("PlannedQuantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("PostedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ProductionNotes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("RejectedQuantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTime?>("ScheduledStartUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<long?>("SubRecipeId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("TargetType")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BatchNumber")
+                        .IsUnique();
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("IdempotencyKey")
+                        .IsUnique()
+                        .HasFilter("[IdempotencyKey] IS NOT NULL");
+
+                    b.HasIndex("MenuItemId");
+
+                    b.HasIndex("SubRecipeId");
+
+                    b.ToTable("ProductionBatches", t =>
+                        {
+                            t.HasCheckConstraint("CK_ProductionBatch_Target", "([TargetType] = 1 AND [SubRecipeId] IS NOT NULL AND [MenuItemId] IS NULL) OR ([TargetType] = 2 AND [SubRecipeId] IS NULL AND [MenuItemId] IS NOT NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Production.ProductionBatchCostSnapshot", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<decimal>("AcceptedQuantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("ActualProducedQuantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<long?>("CorrectionOfSnapshotId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("DirectLaborCostTotal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("FullProductionTotalCost")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("FullProductionUnitCost")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("IngredientOnlyTotalCost")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("IngredientOnlyUnitCost")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("IsImmutable")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal>("OtherOverheadCostTotal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("PackagingCostTotal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("PlannedQuantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<long>("ProductionBatchId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("RawMaterialsCostTotal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("RejectedQuantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("ReusableMaterialsCostTotal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("SnapshotTimestampUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("SubRecipesCostTotal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalBatchSpoilageLoss")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("UtilityCostTotal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CorrectionOfSnapshotId");
+
+                    b.HasIndex("ProductionBatchId")
+                        .IsUnique();
+
+                    b.ToTable("ProductionBatchCostSnapshots");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Production.ProductionBatchIngredient", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<decimal>("ActualQuantityConsumed")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("IngredientId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("PlannedQuantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<long>("ProductionBatchId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("QuantityInBaseUnit")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalCost")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("UnitCostSnapshot")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("UnitUsed")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IngredientId");
+
+                    b.HasIndex("ProductionBatchId");
+
+                    b.ToTable("ProductionBatchIngredients");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Production.ProductionBatchSubRecipe", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<decimal>("ActualQuantityConsumed")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("PlannedQuantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<long>("ProductionBatchId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("SubRecipeId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("TotalCost")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("UnitCostSnapshot")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("UnitUsed")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductionBatchId");
+
+                    b.HasIndex("SubRecipeId");
+
+                    b.ToTable("ProductionBatchSubRecipes");
+                });
+
             modelBuilder.Entity("KabirKitchen.Domain.Entities.Promotions.PromotionCampaign", b =>
                 {
                     b.Property<long>("Id")
@@ -1782,6 +2928,59 @@ namespace KabirKitchen.Infrastructure.Migrations
                     b.ToTable("Ingredients");
                 });
 
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Recipe.IngredientUomConversion", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FromUnit")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<long>("IngredientId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDefaultPurchaseUnit")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal>("Multiplier")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("PackageDescription")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ToBaseUnit")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IngredientId", "FromUnit", "ToBaseUnit")
+                        .IsUnique();
+
+                    b.ToTable("IngredientUomConversions", t =>
+                        {
+                            t.HasCheckConstraint("CK_UomConversion_PositiveMultiplier", "[Multiplier] > 0");
+                        });
+                });
+
             modelBuilder.Entity("KabirKitchen.Domain.Entities.Recipe.Recipe", b =>
                 {
                     b.Property<long>("Id")
@@ -1853,6 +3052,9 @@ namespace KabirKitchen.Infrastructure.Migrations
                     b.Property<long>("RecipeId")
                         .HasColumnType("bigint");
 
+                    b.Property<long?>("SubRecipeId")
+                        .HasColumnType("bigint");
+
                     b.Property<int>("UnitUsed")
                         .HasColumnType("int");
 
@@ -1871,7 +3073,131 @@ namespace KabirKitchen.Infrastructure.Migrations
 
                     b.HasIndex("RecipeId");
 
+                    b.HasIndex("SubRecipeId");
+
                     b.ToTable("RecipeIngredients");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Recipe.SubRecipe", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("BaseUnit")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("HasExpiry")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ShelfLifeDays")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ShelfLifeHours")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("StandardBatchYield")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("StorageCondition")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("SubRecipes");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Recipe.SubRecipeIngredient", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long?>("ChildSubRecipeId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long?>("IngredientId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Quantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("QuantityInBaseUnit")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<long>("SubRecipeId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Unit")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChildSubRecipeId");
+
+                    b.HasIndex("IngredientId");
+
+                    b.HasIndex("SubRecipeId");
+
+                    b.ToTable("SubRecipeIngredients");
                 });
 
             modelBuilder.Entity("KabirKitchen.Domain.Entities.Support.Conversation", b =>
@@ -2223,6 +3549,190 @@ namespace KabirKitchen.Infrastructure.Migrations
                     b.Navigation("MenuItem");
                 });
 
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Inventory.BranchProductStock", b =>
+                {
+                    b.HasOne("KabirKitchen.Domain.Entities.Organization.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Catalog.MenuItem", "MenuItem")
+                        .WithMany()
+                        .HasForeignKey("MenuItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("MenuItem");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Inventory.BranchSubRecipeStock", b =>
+                {
+                    b.HasOne("KabirKitchen.Domain.Entities.Organization.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Recipe.SubRecipe", "SubRecipe")
+                        .WithMany()
+                        .HasForeignKey("SubRecipeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("SubRecipe");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Inventory.EquipmentReservoir", b =>
+                {
+                    b.HasOne("KabirKitchen.Domain.Entities.Organization.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Recipe.Ingredient", "Ingredient")
+                        .WithMany()
+                        .HasForeignKey("IngredientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Ingredient");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Inventory.EquipmentReservoirTransaction", b =>
+                {
+                    b.HasOne("KabirKitchen.Domain.Entities.Inventory.EquipmentReservoir", "EquipmentReservoir")
+                        .WithMany("Transactions")
+                        .HasForeignKey("EquipmentReservoirId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Inventory.InventoryLot", "SourceInventoryLot")
+                        .WithMany()
+                        .HasForeignKey("SourceInventoryLotId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("EquipmentReservoir");
+
+                    b.Navigation("SourceInventoryLot");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Inventory.IngredientLotAllocation", b =>
+                {
+                    b.HasOne("KabirKitchen.Domain.Entities.Inventory.InventoryLot", "InventoryLot")
+                        .WithMany("IngredientAllocations")
+                        .HasForeignKey("InventoryLotId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Inventory.IngredientLotAllocation", "OriginalAllocation")
+                        .WithMany()
+                        .HasForeignKey("OriginalAllocationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Inventory.StockTransaction", "StockTransaction")
+                        .WithMany()
+                        .HasForeignKey("StockTransactionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("InventoryLot");
+
+                    b.Navigation("OriginalAllocation");
+
+                    b.Navigation("StockTransaction");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Inventory.InventoryLot", b =>
+                {
+                    b.HasOne("KabirKitchen.Domain.Entities.Organization.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Recipe.Ingredient", "Ingredient")
+                        .WithMany()
+                        .HasForeignKey("IngredientId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Catalog.MenuItem", "MenuItem")
+                        .WithMany()
+                        .HasForeignKey("MenuItemId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Recipe.SubRecipe", "SubRecipe")
+                        .WithMany()
+                        .HasForeignKey("SubRecipeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Ingredient");
+
+                    b.Navigation("MenuItem");
+
+                    b.Navigation("SubRecipe");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Inventory.ProductLotAllocation", b =>
+                {
+                    b.HasOne("KabirKitchen.Domain.Entities.Inventory.InventoryLot", "InventoryLot")
+                        .WithMany("ProductAllocations")
+                        .HasForeignKey("InventoryLotId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Inventory.ProductLotAllocation", "OriginalAllocation")
+                        .WithMany()
+                        .HasForeignKey("OriginalAllocationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Inventory.ProductStockTransaction", "ProductStockTransaction")
+                        .WithMany()
+                        .HasForeignKey("ProductStockTransactionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("InventoryLot");
+
+                    b.Navigation("OriginalAllocation");
+
+                    b.Navigation("ProductStockTransaction");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Inventory.ProductStockTransaction", b =>
+                {
+                    b.HasOne("KabirKitchen.Domain.Entities.Organization.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Inventory.BranchProductStock", "BranchProductStock")
+                        .WithMany()
+                        .HasForeignKey("BranchProductStockId");
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Catalog.MenuItem", "MenuItem")
+                        .WithMany()
+                        .HasForeignKey("MenuItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("BranchProductStock");
+
+                    b.Navigation("MenuItem");
+                });
+
             modelBuilder.Entity("KabirKitchen.Domain.Entities.Inventory.StockTransaction", b =>
                 {
                     b.HasOne("KabirKitchen.Domain.Entities.Organization.Branch", "Branch")
@@ -2242,6 +3752,57 @@ namespace KabirKitchen.Infrastructure.Migrations
                     b.Navigation("Ingredient");
                 });
 
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Inventory.SubRecipeLotAllocation", b =>
+                {
+                    b.HasOne("KabirKitchen.Domain.Entities.Inventory.InventoryLot", "InventoryLot")
+                        .WithMany("SubRecipeAllocations")
+                        .HasForeignKey("InventoryLotId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Inventory.SubRecipeLotAllocation", "OriginalAllocation")
+                        .WithMany()
+                        .HasForeignKey("OriginalAllocationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Inventory.SubRecipeStockTransaction", "SubRecipeStockTransaction")
+                        .WithMany()
+                        .HasForeignKey("SubRecipeStockTransactionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("InventoryLot");
+
+                    b.Navigation("OriginalAllocation");
+
+                    b.Navigation("SubRecipeStockTransaction");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Inventory.SubRecipeStockTransaction", b =>
+                {
+                    b.HasOne("KabirKitchen.Domain.Entities.Organization.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Inventory.BranchSubRecipeStock", "BranchSubRecipeStock")
+                        .WithMany()
+                        .HasForeignKey("BranchSubRecipeStockId");
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Recipe.SubRecipe", "SubRecipe")
+                        .WithMany()
+                        .HasForeignKey("SubRecipeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("BranchSubRecipeStock");
+
+                    b.Navigation("SubRecipe");
+                });
+
             modelBuilder.Entity("KabirKitchen.Domain.Entities.Kitchen.KitchenTicket", b =>
                 {
                     b.HasOne("KabirKitchen.Domain.Entities.Organization.Branch", "Branch")
@@ -2251,6 +3812,24 @@ namespace KabirKitchen.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Branch");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Kitchen.TableReservation", b =>
+                {
+                    b.HasOne("KabirKitchen.Domain.Entities.Organization.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Identity.User", "CustomerUser")
+                        .WithMany()
+                        .HasForeignKey("CustomerUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("CustomerUser");
                 });
 
             modelBuilder.Entity("KabirKitchen.Domain.Entities.Kitchen.WastageRecord", b =>
@@ -2270,6 +3849,25 @@ namespace KabirKitchen.Infrastructure.Migrations
                     b.Navigation("Branch");
 
                     b.Navigation("Ingredient");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Orders.CashShift", b =>
+                {
+                    b.HasOne("KabirKitchen.Domain.Entities.Organization.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Identity.User", "CashierUser")
+                        .WithMany()
+                        .HasForeignKey("CashierUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("CashierUser");
                 });
 
             modelBuilder.Entity("KabirKitchen.Domain.Entities.Orders.Order", b =>
@@ -2426,6 +4024,87 @@ namespace KabirKitchen.Infrastructure.Migrations
                     b.Navigation("PurchaseOrder");
                 });
 
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Production.ProductionBatch", b =>
+                {
+                    b.HasOne("KabirKitchen.Domain.Entities.Organization.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Catalog.MenuItem", "MenuItem")
+                        .WithMany()
+                        .HasForeignKey("MenuItemId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Recipe.SubRecipe", "SubRecipe")
+                        .WithMany()
+                        .HasForeignKey("SubRecipeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("MenuItem");
+
+                    b.Navigation("SubRecipe");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Production.ProductionBatchCostSnapshot", b =>
+                {
+                    b.HasOne("KabirKitchen.Domain.Entities.Production.ProductionBatchCostSnapshot", "CorrectionOfSnapshot")
+                        .WithMany()
+                        .HasForeignKey("CorrectionOfSnapshotId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Production.ProductionBatch", "ProductionBatch")
+                        .WithOne("CostSnapshot")
+                        .HasForeignKey("KabirKitchen.Domain.Entities.Production.ProductionBatchCostSnapshot", "ProductionBatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CorrectionOfSnapshot");
+
+                    b.Navigation("ProductionBatch");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Production.ProductionBatchIngredient", b =>
+                {
+                    b.HasOne("KabirKitchen.Domain.Entities.Recipe.Ingredient", "Ingredient")
+                        .WithMany()
+                        .HasForeignKey("IngredientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Production.ProductionBatch", "ProductionBatch")
+                        .WithMany("ConsumedIngredients")
+                        .HasForeignKey("ProductionBatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Ingredient");
+
+                    b.Navigation("ProductionBatch");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Production.ProductionBatchSubRecipe", b =>
+                {
+                    b.HasOne("KabirKitchen.Domain.Entities.Production.ProductionBatch", "ProductionBatch")
+                        .WithMany("ConsumedSubRecipes")
+                        .HasForeignKey("ProductionBatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Recipe.SubRecipe", "SubRecipe")
+                        .WithMany()
+                        .HasForeignKey("SubRecipeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ProductionBatch");
+
+                    b.Navigation("SubRecipe");
+                });
+
             modelBuilder.Entity("KabirKitchen.Domain.Entities.Promotions.PromotionEngagement", b =>
                 {
                     b.HasOne("KabirKitchen.Domain.Entities.Promotions.PromotionCampaign", "PromotionCampaign")
@@ -2435,6 +4114,17 @@ namespace KabirKitchen.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("PromotionCampaign");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Recipe.IngredientUomConversion", b =>
+                {
+                    b.HasOne("KabirKitchen.Domain.Entities.Recipe.Ingredient", "Ingredient")
+                        .WithMany()
+                        .HasForeignKey("IngredientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Ingredient");
                 });
 
             modelBuilder.Entity("KabirKitchen.Domain.Entities.Recipe.Recipe", b =>
@@ -2468,9 +4158,40 @@ namespace KabirKitchen.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("KabirKitchen.Domain.Entities.Recipe.SubRecipe", "SubRecipe")
+                        .WithMany()
+                        .HasForeignKey("SubRecipeId");
+
                     b.Navigation("Ingredient");
 
                     b.Navigation("Recipe");
+
+                    b.Navigation("SubRecipe");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Recipe.SubRecipeIngredient", b =>
+                {
+                    b.HasOne("KabirKitchen.Domain.Entities.Recipe.SubRecipe", "ChildSubRecipe")
+                        .WithMany()
+                        .HasForeignKey("ChildSubRecipeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Recipe.Ingredient", "Ingredient")
+                        .WithMany()
+                        .HasForeignKey("IngredientId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("KabirKitchen.Domain.Entities.Recipe.SubRecipe", "SubRecipe")
+                        .WithMany("Ingredients")
+                        .HasForeignKey("SubRecipeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ChildSubRecipe");
+
+                    b.Navigation("Ingredient");
+
+                    b.Navigation("SubRecipe");
                 });
 
             modelBuilder.Entity("KabirKitchen.Domain.Entities.Support.Conversation", b =>
@@ -2566,6 +4287,20 @@ namespace KabirKitchen.Infrastructure.Migrations
                     b.Navigation("Roles");
                 });
 
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Inventory.EquipmentReservoir", b =>
+                {
+                    b.Navigation("Transactions");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Inventory.InventoryLot", b =>
+                {
+                    b.Navigation("IngredientAllocations");
+
+                    b.Navigation("ProductAllocations");
+
+                    b.Navigation("SubRecipeAllocations");
+                });
+
             modelBuilder.Entity("KabirKitchen.Domain.Entities.Orders.Order", b =>
                 {
                     b.Navigation("Items");
@@ -2597,12 +4332,26 @@ namespace KabirKitchen.Infrastructure.Migrations
                     b.Navigation("PurchaseOrders");
                 });
 
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Production.ProductionBatch", b =>
+                {
+                    b.Navigation("ConsumedIngredients");
+
+                    b.Navigation("ConsumedSubRecipes");
+
+                    b.Navigation("CostSnapshot");
+                });
+
             modelBuilder.Entity("KabirKitchen.Domain.Entities.Recipe.Ingredient", b =>
                 {
                     b.Navigation("UsedInRecipes");
                 });
 
             modelBuilder.Entity("KabirKitchen.Domain.Entities.Recipe.Recipe", b =>
+                {
+                    b.Navigation("Ingredients");
+                });
+
+            modelBuilder.Entity("KabirKitchen.Domain.Entities.Recipe.SubRecipe", b =>
                 {
                     b.Navigation("Ingredients");
                 });

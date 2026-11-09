@@ -16,10 +16,12 @@ public class BranchIngredientStock : BaseEntity
 
     public decimal CurrentStockQuantity { get; set; } = 0; // Stored in Ingredient.BaseUnit
     public decimal ReservedQuantity { get; set; } = 0;     // Locked for active preparing kitchen orders
+    public decimal QuarantinedQuantity { get; set; } = 0;  // Quarantined (expired/damaged, awaiting disposal)
     public decimal LastPurchaseCostPerUnit { get; set; }
     public decimal MovingAverageCostPerUnit { get; set; }
+    public byte[]? RowVersion { get; set; }                 // Concurrency token
 
-    public decimal AvailableQuantity => CurrentStockQuantity - ReservedQuantity;
+    public decimal AvailableQuantity => CurrentStockQuantity - ReservedQuantity - QuarantinedQuantity;
 }
 
 public class StockTransaction : BaseEntity

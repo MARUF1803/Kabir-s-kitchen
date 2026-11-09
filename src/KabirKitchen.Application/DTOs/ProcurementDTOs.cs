@@ -88,7 +88,8 @@ public record PurchaseOrderResponseDto(
 public record ReceivePurchaseOrderItemDto(
     long PurchaseOrderItemId,
     decimal QuantityReceived,
-    decimal? ActualUnitCost = null
+    decimal? ActualUnitCost = null,
+    DateTime? ExpiryDateUtc = null
 );
 
 public record ReceivePurchaseOrderDto(

@@ -20,6 +20,12 @@ public static class DependencyInjection
         services.AddScoped<PromotionEngineService>();
         services.AddScoped<SalesReportService>();
         services.AddScoped<ProcurementService>();
+        services.AddScoped<UomConversionService>();
+        services.AddScoped<LotManagementService>();
+        services.AddScoped<SubRecipeService>();
+        services.AddScoped<FinishedProductInventoryService>();
+        services.AddScoped<ReservoirService>();
+        services.AddScoped<ProductionService>();
 
         return services;
     }

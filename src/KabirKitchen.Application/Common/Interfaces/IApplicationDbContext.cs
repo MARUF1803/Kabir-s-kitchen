@@ -7,6 +7,7 @@ using KabirKitchen.Domain.Entities.Kitchen;
 using KabirKitchen.Domain.Entities.Orders;
 using KabirKitchen.Domain.Entities.Organization;
 using KabirKitchen.Domain.Entities.Procurement;
+using KabirKitchen.Domain.Entities.Production;
 using KabirKitchen.Domain.Entities.Promotions;
 using KabirKitchen.Domain.Entities.Recipe;
 using KabirKitchen.Domain.Entities.Support;
@@ -68,6 +69,41 @@ public interface IApplicationDbContext
     DbSet<Conversation> Conversations { get; }
     DbSet<ConversationMessage> ConversationMessages { get; }
     DbSet<ConversationAttachment> ConversationAttachments { get; }
+
+    // ─── Inventory ERP — Sub-Recipe Layer ────────────────────────────────────
+    DbSet<SubRecipe> SubRecipes { get; }
+    DbSet<SubRecipeIngredient> SubRecipeIngredients { get; }
+    DbSet<BranchSubRecipeStock> BranchSubRecipeStocks { get; }
+    DbSet<SubRecipeStockTransaction> SubRecipeStockTransactions { get; }
+
+    // ─── Inventory ERP — Finished Product Layer ──────────────────────────────
+    DbSet<BranchProductStock> BranchProductStocks { get; }
+    DbSet<ProductStockTransaction> ProductStockTransactions { get; }
+
+    // ─── Inventory ERP — Lot Tracking ────────────────────────────────────────
+    DbSet<InventoryLot> InventoryLots { get; }
+    DbSet<IngredientLotAllocation> IngredientLotAllocations { get; }
+    DbSet<SubRecipeLotAllocation> SubRecipeLotAllocations { get; }
+    DbSet<ProductLotAllocation> ProductLotAllocations { get; }
+
+    // ─── Inventory ERP — Production ──────────────────────────────────────────
+    DbSet<ProductionBatch> ProductionBatches { get; }
+    DbSet<ProductionBatchIngredient> ProductionBatchIngredients { get; }
+    DbSet<ProductionBatchSubRecipe> ProductionBatchSubRecipes { get; }
+    DbSet<ProductionBatchCostSnapshot> ProductionBatchCostSnapshots { get; }
+
+    // ─── Inventory ERP — Equipment Reservoirs ────────────────────────────────
+    DbSet<EquipmentReservoir> EquipmentReservoirs { get; }
+    DbSet<EquipmentReservoirTransaction> EquipmentReservoirTransactions { get; }
+
+    // ─── Inventory ERP — UOM Conversions ─────────────────────────────────────
+    DbSet<IngredientUomConversion> IngredientUomConversions { get; }
+
+    // ─── Table Reservations ───────────────────────────────────────────────────
+    DbSet<TableReservation> TableReservations { get; }
+
+    // ─── Cash Shifts (Z-Report) ───────────────────────────────────────────────
+    DbSet<CashShift> CashShifts { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

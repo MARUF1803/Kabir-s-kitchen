@@ -1,4 +1,5 @@
 using KabirKitchen.Domain.Common;
+using KabirKitchen.Domain.Enums;
 
 namespace KabirKitchen.Domain.Entities.Catalog;
 
@@ -47,6 +48,9 @@ public class MenuItem : BaseEntity, ISoftDelete
     public bool IsCustomCake { get; set; } = false;
     public bool IsPopular { get; set; } = false;
     public bool IsActive { get; set; } = true;
+
+    // Inventory ERP Extension: defaults MadeToOrder so all existing items continue to deduct raw materials
+    public ProductionType ProductionType { get; set; } = ProductionType.MadeToOrder;
 
     // Soft delete
     public bool IsDeleted { get; set; }

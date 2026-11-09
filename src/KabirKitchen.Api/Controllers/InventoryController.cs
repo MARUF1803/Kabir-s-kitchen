@@ -63,6 +63,68 @@ public class InventoryController : ControllerBase
         return Ok(stocks);
     }
 
+    [HttpGet("finished-products")]
+    [Authorize(Roles = "Admin,SuperAdmin,BranchManager,Cashier,Chef")]
+    public async Task<IActionResult> GetFinishedProductStocks([FromQuery] long branchId)
+    {
+        if (branchId <= 0) return BadRequest(new { message = "A valid branch ID is required." });
+        if (!_currentUser.HasAccessToBranch(branchId)) return Forbid();
+
+        var stocks = await _context.BranchProductStocks
+            .Include(s => s.Branch)
+            .Include(s => s.MenuItem)
+            .Where(s => s.BranchId == branchId && s.MenuItem != null && !s.MenuItem.IsDeleted)
+            .Select(s => new BranchProductStockDto(
+                s.Id,
+                s.BranchId,
+                s.Branch != null ? s.Branch.Name : "",
+                s.MenuItemId,
+                s.MenuItem != null ? s.MenuItem.Name : "",
+                s.MenuItemVariantId,
+                null,
+                s.CurrentStockQuantity,
+                s.ReservedQuantity,
+                s.QuarantinedQuantity,
+                s.AvailableQuantity,
+                s.MinimumAlertStock,
+                s.MovingAverageCostPerUnit
+            ))
+            .ToListAsync();
+
+        return Ok(stocks);
+    }
+
+    [HttpGet("sub-recipes")]
+    [Authorize(Roles = "Admin,SuperAdmin,BranchManager,Cashier,Chef")]
+    public async Task<IActionResult> GetSubRecipeStocks([FromQuery] long branchId)
+    {
+        if (branchId <= 0) return BadRequest(new { message = "A valid branch ID is required." });
+        if (!_currentUser.HasAccessToBranch(branchId)) return Forbid();
+
+        var stocks = await _context.BranchSubRecipeStocks
+            .Include(s => s.Branch)
+            .Include(s => s.SubRecipe)
+            .Where(s => s.BranchId == branchId && s.SubRecipe != null && !s.SubRecipe.IsDeleted)
+            .Select(s => new BranchSubRecipeStockDto(
+                s.Id,
+                s.BranchId,
+                s.Branch != null ? s.Branch.Name : "",
+                s.SubRecipeId,
+                s.SubRecipe != null ? s.SubRecipe.Name : "",
+                s.SubRecipe != null ? s.SubRecipe.Code : "",
+                s.SubRecipe != null ? s.SubRecipe.BaseUnit : Domain.Enums.UnitType.Kilogram,
+                s.CurrentStockQuantity,
+                s.ReservedQuantity,
+                s.QuarantinedQuantity,
+                s.AvailableQuantity,
+                s.MinimumAlertStock,
+                s.MovingAverageCostPerUnit
+            ))
+            .ToListAsync();
+
+        return Ok(stocks);
+    }
+
     [HttpGet("low-stock")]
     [Authorize(Roles = "Admin,SuperAdmin,BranchManager,Cashier,Chef")]
     public async Task<IActionResult> GetLowStock([FromQuery] long branchId)

@@ -239,6 +239,25 @@ public class ProcurementService
             {
                 return Result<PurchaseOrderResponseDto>.Failure($"Failed to update stock for item {item.IngredientId}: {stockResult.Error}");
             }
+
+            // Create InventoryLot for this receipt
+            var lotService = new LotManagementService(_context);
+            var lotNumber = await lotService.GenerateRawMaterialLotNumberAsync();
+            var rawLot = lotService.CreateRawMaterialLot(
+                lotNumber: lotNumber,
+                branchId: po.BranchId,
+                ingredientId: item.IngredientId,
+                quantity: item.QuantityReceived,
+                unitCost: item.UnitCost,
+                expiryDateUtc: receivedItemDto.ExpiryDateUtc,
+                hasExpiry: receivedItemDto.ExpiryDateUtc.HasValue,
+                sourceReference: po.PoNumber
+            );
+            _context.InventoryLots.Add(rawLot);
+            await _context.SaveChangesAsync();
+
+            var alloc = LotManagementService.CreateReceiptAllocation(rawLot, stockResult.Value.Id);
+            _context.IngredientLotAllocations.Add(alloc);
         }
 
         // Determine new status: Received only if ALL items are fully received

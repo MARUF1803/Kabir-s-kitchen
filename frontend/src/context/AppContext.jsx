@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { AppContext } from './AppContext.js';
 import { bakeryApi, branchesApi, categoriesApi, mapMenuItemToProduct, productsApi, promotionsApi, setAuthToken, ordersApi } from '../services/api';
+import { offlineStorage } from '../services/offlineSync';
 
 const BRANCH_UNAVAILABLE = { id: 0, code: 'N/A', name: 'Branch unavailable', address: '', phone: '' };
 const formatCurrentTime = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -29,6 +30,33 @@ export function AppProvider({ children }) {
     };
     window.addEventListener('auth:unauthorized', handleUnauthorized);
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+  }, []);
+
+  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+  const [offlineQueueCount, setOfflineQueueCount] = useState(() => offlineStorage.getQueue().length);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      // Auto-trigger sync when back online
+      offlineStorage.syncAll(ordersApi).then(res => {
+        if (res.success > 0) {
+          setOfflineQueueCount(offlineStorage.getQueue().length);
+        }
+      });
+    };
+    const handleOffline = () => setIsOnline(false);
+    const handleQueueUpdated = (e) => setOfflineQueueCount(e.detail?.count ?? offlineStorage.getQueue().length);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('kabir:offline-queue-updated', handleQueueUpdated);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('kabir:offline-queue-updated', handleQueueUpdated);
+    };
   }, []);
 
   const [products, setProducts] = useState([]);
@@ -70,12 +98,20 @@ export function AppProvider({ children }) {
         setProductPage(result.page);
         setProductTotalCount(result.totalCount);
         setHasMoreProducts(result.hasNextPage);
+        offlineStorage.saveCatalog(loadedProducts, categories, activeBranch);
       }
 
       return result;
     } catch (error) {
       if (requestId === productRequestId.current) {
-        setProductLoadError(error.response?.data?.message || error.message || 'Menu data could not be loaded from the server.');
+        const cached = offlineStorage.getCachedCatalog();
+        if (cached && cached.products && cached.products.length > 0) {
+          setProducts(cached.products);
+          setProductTotalCount(cached.products.length);
+          setProductLoadError('');
+        } else {
+          setProductLoadError(error.response?.data?.message || error.message || 'Menu data could not be loaded from the server.');
+        }
       }
       return null;
     } finally {
@@ -96,7 +132,12 @@ export function AppProvider({ children }) {
         if (active) setCategories(items);
       })
       .catch(error => {
-        if (active) setCategoryLoadError(error.response?.data?.message || 'Menu categories could not be loaded from the server.');
+        const cached = offlineStorage.getCachedCatalog();
+        if (cached && cached.categories && cached.categories.length > 0 && active) {
+          setCategories(cached.categories);
+        } else if (active) {
+          setCategoryLoadError(error.response?.data?.message || 'Menu categories could not be loaded from the server.');
+        }
       });
 
     return () => { active = false; };
@@ -376,17 +417,51 @@ export function AppProvider({ children }) {
     items,
     orderType = 'Delivery',
     couponCode = null
-  }) => promotionsApi.quote({
-    branchId: selectedBranchId,
-    orderType: orderType === 'Pickup' ? 'Takeaway' : orderType,
-    couponCode,
-    items: (items || []).map(item => ({
-      menuItemId: Number(item.productId || item.id),
-      menuItemVariantId: item.menuItemVariantId || null,
-      quantity: item.qty,
-      selectedAddOnIds: item.selectedAddOnIds || []
-    }))
-  }), [selectedBranchId]);
+  }) => {
+    // If browser is offline, instantly return local fallback calculation
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      const subtotal = (items || []).reduce((sum, item) => sum + ((item.unitPrice || item.effectivePrice || 0) * (item.qty || 1)), 0);
+      const vatTax = Math.round(subtotal * 0.05 * 100) / 100;
+      const deliveryFee = orderType === 'Delivery' ? 60 : 0;
+      return {
+        subTotal: subtotal,
+        discountAmount: 0,
+        taxAmount: vatTax,
+        deliveryFee: deliveryFee,
+        totalAmount: subtotal + vatTax + deliveryFee,
+        totalIngredientBOMCost: 0,
+        isOfflineQuote: true
+      };
+    }
+
+    try {
+      return await promotionsApi.quote({
+        branchId: selectedBranchId,
+        orderType: orderType === 'Pickup' ? 'Takeaway' : orderType,
+        couponCode,
+        items: (items || []).map(item => ({
+          menuItemId: Number(item.productId || item.id),
+          menuItemVariantId: item.menuItemVariantId || null,
+          quantity: item.qty,
+          selectedAddOnIds: item.selectedAddOnIds || []
+        }))
+      });
+    } catch {
+      // If server unreachable, return local fallback quote
+      const subtotal = (items || []).reduce((sum, item) => sum + ((item.unitPrice || item.effectivePrice || 0) * (item.qty || 1)), 0);
+      const vatTax = Math.round(subtotal * 0.05 * 100) / 100;
+      const deliveryFee = orderType === 'Delivery' ? 60 : 0;
+      return {
+        subTotal: subtotal,
+        discountAmount: 0,
+        taxAmount: vatTax,
+        deliveryFee: deliveryFee,
+        totalAmount: subtotal + vatTax + deliveryFee,
+        totalIngredientBOMCost: 0,
+        isOfflineQuote: true
+      };
+    }
+  }, [selectedBranchId]);
 
   // Place Order through Central Engine
   const placeOrder = async ({
@@ -404,33 +479,87 @@ export function AppProvider({ children }) {
     if (!sourceItems || sourceItems.length === 0) return null;
 
     const idempotencyKey = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
-    const apiOrder = await ordersApi.create({
-      branchId: selectedBranchId,
-      orderType: orderType === 'Pickup' ? 'Takeaway' : orderType,
-      customerName: customerName || userProfile.name,
-      customerPhone: customerPhone || userProfile.phone,
-      deliveryAddress: orderType === 'Delivery' ? deliveryAddress : null,
-      customerNotes: _notes || null,
-      couponCode,
-      idempotencyKey,
-      items: sourceItems.map(item => ({
-        menuItemId: Number(item.productId || item.id),
-        menuItemVariantId: item.menuItemVariantId || null,
-        quantity: item.qty,
-        specialInstructions: item.notes || null,
-        selectedAddOnIds: item.selectedAddOnIds || []
-      }))
-    });
+    let apiOrder = null;
+    let isOfflineExecution = typeof navigator !== 'undefined' && !navigator.onLine;
 
-    const calcSubtotal = apiOrder.subTotal;
-    const calcDiscount = apiOrder.discountAmount;
-    const calcTax = apiOrder.taxAmount;
-    const calcDeliveryFee = apiOrder.deliveryFee;
-    const calcTotal = apiOrder.totalAmount;
-    const totalBOMCost = apiOrder.totalIngredientBOMCost;
-    const newId = apiOrder.id;
-    const orderNumber = apiOrder.orderNumber;
-    const invoiceNumber = apiOrder.invoiceNumber;
+    if (!isOfflineExecution) {
+      try {
+        apiOrder = await ordersApi.create({
+          branchId: selectedBranchId,
+          orderType: orderType === 'Pickup' ? 'Takeaway' : orderType,
+          customerName: customerName || userProfile.name,
+          customerPhone: customerPhone || userProfile.phone,
+          deliveryAddress: orderType === 'Delivery' ? deliveryAddress : null,
+          customerNotes: _notes || null,
+          couponCode,
+          idempotencyKey,
+          items: sourceItems.map(item => ({
+            menuItemId: Number(item.productId || item.id),
+            menuItemVariantId: item.menuItemVariantId || null,
+            quantity: item.qty,
+            specialInstructions: item.notes || null,
+            selectedAddOnIds: item.selectedAddOnIds || []
+          }))
+        });
+      } catch (err) {
+        console.warn('Network failure placing order; falling back to offline queue', err);
+        isOfflineExecution = true;
+      }
+    }
+
+    let calcSubtotal, calcDiscount, calcTax, calcDeliveryFee, calcTotal, totalBOMCost, newId, orderNumber, invoiceNumber, paidAmount, outstandingAmount, status, paymentStatus;
+
+    if (apiOrder) {
+      calcSubtotal = apiOrder.subTotal;
+      calcDiscount = apiOrder.discountAmount;
+      calcTax = apiOrder.taxAmount;
+      calcDeliveryFee = apiOrder.deliveryFee;
+      calcTotal = apiOrder.totalAmount;
+      totalBOMCost = apiOrder.totalIngredientBOMCost;
+      newId = apiOrder.id;
+      orderNumber = apiOrder.orderNumber;
+      invoiceNumber = apiOrder.invoiceNumber;
+      paidAmount = apiOrder.paidAmount;
+      outstandingAmount = apiOrder.outstandingAmount;
+      status = apiOrder.status;
+      paymentStatus = apiOrder.paymentStatus;
+    } else {
+      // Local offline order calculation
+      calcSubtotal = sourceItems.reduce((sum, c) => sum + ((c.unitPrice || c.effectivePrice || 0) * c.qty), 0);
+      calcDiscount = 0;
+      calcTax = Math.round(calcSubtotal * 0.05 * 100) / 100;
+      calcDeliveryFee = orderType === 'Delivery' ? 60 : 0;
+      calcTotal = calcSubtotal + calcTax + calcDeliveryFee;
+      totalBOMCost = 0;
+
+      const branchCode = (activeBranch?.name || 'BRN').replace(/\s+/g, '').substring(0, 3).toUpperCase();
+      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      const randomSeq = Math.floor(1000 + Math.random() * 9000);
+      orderNumber = `OFF-${branchCode}-${dateStr}-${randomSeq}`;
+      invoiceNumber = orderNumber;
+      newId = Date.now();
+      paidAmount = calcTotal;
+      outstandingAmount = 0;
+      status = 'Confirmed (Offline)';
+      paymentStatus = 'Paid';
+
+      // Enqueue in offline storage for automatic sync when online
+      offlineStorage.enqueueOrder({
+        branchId: selectedBranchId,
+        orderType: orderType === 'Pickup' ? 'Takeaway' : orderType,
+        customerName: customerName || userProfile.name,
+        customerPhone: customerPhone || userProfile.phone,
+        deliveryAddress: orderType === 'Delivery' ? deliveryAddress : null,
+        notes: _notes,
+        couponCode,
+        idempotencyKey,
+        items: sourceItems,
+        subTotal: calcSubtotal,
+        taxAmount: calcTax,
+        totalAmount: calcTotal,
+        paymentMethod
+      });
+    }
 
     const formattedItems = sourceItems.map(c => ({
       id: c.productId || c.id,
@@ -588,6 +717,9 @@ export function AppProvider({ children }) {
         selectedBranchId,
         setSelectedBranchId,
         activeBranch,
+        isOnline,
+        offlineQueueCount,
+        syncOfflineOrders: () => offlineStorage.syncAll(ordersApi),
         branches,
         branchLoadError,
         products,
