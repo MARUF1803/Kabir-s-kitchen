@@ -184,7 +184,7 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
             </div>
             <div>
               <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#7e22ce', textTransform: 'uppercase' }}>
-                Artisan Cake Studio • {activeBranch.name}
+                Artisan Celebration Cake Studio
               </span>
               <h3 style={{ fontSize: '1.3rem', fontWeight: 900, color: '#0b0f17', margin: 0 }}>
                 Custom Celebration Cake

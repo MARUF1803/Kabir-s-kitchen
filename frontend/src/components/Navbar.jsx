@@ -36,7 +36,7 @@ export default function Navbar({ onOpenSearch, onOpenReservation }) {
         <div className="system-bar__context">
           <span className="system-bar__brand" style={{ color: '#d4af37', letterSpacing: '0.12em', fontWeight: 900 }}>KABIR’S KITCHEN</span>
           <span className="system-bar__divider" style={{ background: 'rgba(212,175,55,0.3)' }} />
-          <span>Freshly prepared at <strong>{activeBranch.name}</strong></span>
+          <span>Artisanal Dining, Bakery & Fast Food</span>
           <span className="system-bar__status"><span /> Open today · 9 AM–10 PM</span>
         </div>
 
@@ -98,19 +98,8 @@ export default function Navbar({ onOpenSearch, onOpenReservation }) {
           </span>
         </button>
 
-        {/* Branch Selector */}
-        <div className="branch-picker" style={{ border: '1px solid #e3d7c7', background: '#fffcf7' }}>
-          <MapPin size={16} style={{ color: '#ea580c' }} />
-          <div>
-            <small style={{ color: '#8c7664' }}>Branch / Location</small>
-            <select value={selectedBranchId} onChange={e => setSelectedBranchId(Number(e.target.value))} aria-label="Choose branch">
-              {branches.map(branch => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
-            </select>
-          </div>
-        </div>
-
         {/* Global Search */}
-        <label className="global-search" style={{ border: '1.5px solid #e8decb', borderRadius: '12px', height: '42px', flex: '1', maxWidth: '340px', marginLeft: 'auto' }}>
+        <label className="global-search" style={{ border: '1.5px solid #e8decb', borderRadius: '12px', height: '42px', flex: '1', maxWidth: '420px', marginLeft: 'auto', marginRight: '16px' }}>
           <Search size={17} style={{ color: '#9c8b78' }} />
           <input type="text" placeholder="Search biryani, burgers, cakes..." onChange={e => onOpenSearch?.(e.target.value)} aria-label="Search menu" />
         </label>

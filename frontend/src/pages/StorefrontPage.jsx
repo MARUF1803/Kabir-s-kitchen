@@ -449,17 +449,6 @@ export default function StorefrontPage({ onSelectProduct, onOpenCakeCustomizer, 
                       <Calendar size={18} style={{ color: '#34d399' }} /> Ask about a table
                     </button>
                   </div>
-
-                  <div className="stat-pills-row" style={{ marginTop: '28px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.15)' }}>
-                    <div className="stat-pill">
-                      <strong>{productTotalCount.toLocaleString()}</strong>
-                      <span style={{ color: '#c9d8ce' }}>Catalog Products</span>
-                    </div>
-                    <div className="stat-pill">
-                      <strong>{branches.length.toLocaleString()}</strong>
-                      <span style={{ color: '#c9d8ce' }}>Restaurant branches</span>
-                    </div>
-                  </div>
                 </div>
 
                 {/* Right side floating badges */}
@@ -574,7 +563,7 @@ export default function StorefrontPage({ onSelectProduct, onOpenCakeCustomizer, 
                 Results for &ldquo;{searchQuery}&rdquo;
               </h2>
               <p style={{ color: '#64748b', fontSize: '0.85rem', margin: '4px 0 0' }}>
-                Found <strong>{filteredProducts.length}</strong> matching dish{filteredProducts.length === 1 ? '' : 'es'} in {activeBranch.name}
+                Found <strong>{filteredProducts.length}</strong> matching dish{filteredProducts.length === 1 ? '' : 'es'}
               </p>
             </div>
             <div style={{ background: '#fff7ed', color: '#ea580c', border: '1px solid #ffedd5', padding: '6px 14px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 700 }}>
@@ -773,7 +762,7 @@ export default function StorefrontPage({ onSelectProduct, onOpenCakeCustomizer, 
           <div>
             <span className="eyebrow" style={{ color: '#ea580c' }}>Full Catalog</span>
             <h2>Explore Our Complete Menu</h2>
-            <p>Showing {filteredProducts.length} of {productTotalCount} items from {activeBranch.name}</p>
+            <p>Crafted fresh with dependable quality and authentic culinary taste</p>
           </div>
           <div className="menu-controls">
             <div className="dietary-filter" aria-label="Dietary filters">
