@@ -318,19 +318,46 @@ export default function CheckoutModal({ isOpen, onClose, onOrderPlaced }) {
             />
           </div>
 
-          {/* Order Summary & Submit */}
-          <div style={{ background: '#f8fafc', padding: 14, borderRadius: 10, border: '1px solid #e2e8f0' }}>
-            {quoteError && <div role="alert" style={{ color: '#be123c', fontSize: 12, marginBottom: 8 }}>{quoteError}</div>}
-            {!quoteError && <div style={{ color: '#64748b', fontSize: 12, marginBottom: 8 }}>
-              {quoteLoading ? 'Checking server price…' : priceQuote?.campaignName ? `Offer applied: ${priceQuote.campaignName}` : 'Price checked by the server.'}
-            </div>}
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: 4 }}>
-              <span>Items ({cart.reduce((s, i) => s + i.qty, 0)})</span>
-              <span>Branch: <strong>{activeBranch.code}</strong></span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.2rem', fontWeight: 900, color: '#0b0f17' }}>
-              <span>Total Amount:</span>
-              <span style={{ color: '#ff7828' }}>{priceQuote ? `৳${priceQuote.totalAmount}` : '—'}</span>
+          {/* Order Summary & Price Breakdown */}
+          <div style={{ background: '#f8fafc', padding: 16, borderRadius: 12, border: '1px solid #e2e8f0' }}>
+            {quoteError && <div role="alert" style={{ color: '#be123c', fontSize: 13, marginBottom: 8, fontWeight: 700 }}>{quoteError}</div>}
+            {!quoteError && (
+              <div style={{ color: priceQuote?.discountAmount > 0 ? '#15803d' : '#64748b', fontSize: 12, marginBottom: 10, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                {quoteLoading
+                  ? 'Checking server price…'
+                  : priceQuote?.campaignName
+                    ? `🎉 Offer applied: ${priceQuote.campaignName} (-৳${priceQuote.discountAmount})`
+                    : 'Price verified by server.'}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: '0.85rem', color: '#475569' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Subtotal ({cart.reduce((s, i) => s + i.qty, 0)} items)</span>
+                <span>{priceQuote ? `৳${priceQuote.subTotal}` : '—'}</span>
+              </div>
+
+              {priceQuote?.discountAmount > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#16a34a', fontWeight: 700 }}>
+                  <span>Offer Discount</span>
+                  <span>-৳${priceQuote.discountAmount}</span>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>{orderType === 'Delivery' ? 'Delivery Fee' : orderType === 'DineIn' ? 'Table Service' : 'Store Pickup'}</span>
+                <span>{priceQuote ? (priceQuote.deliveryFee > 0 ? `৳${priceQuote.deliveryFee}` : 'FREE') : '—'}</span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>VAT & Tax (5%)</span>
+                <span>{priceQuote ? `৳${priceQuote.taxAmount}` : '—'}</span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.15rem', fontWeight: 900, color: '#0b0f17', borderTop: '1px solid #e2e8f0', paddingTop: 8, marginTop: 4 }}>
+                <span>Total Payable</span>
+                <span style={{ color: '#ff7828' }}>{priceQuote ? `৳${priceQuote.totalAmount}` : '—'}</span>
+              </div>
             </div>
           </div>
 

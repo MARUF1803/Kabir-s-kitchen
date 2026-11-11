@@ -72,7 +72,7 @@ export default function StorefrontPage({ onSelectProduct, onOpenCakeCustomizer, 
   const {
     products, categories, branches, branchLoadError, productsLoading, productLoadError, categoryLoadError,
     productPage, productTotalCount, hasMoreProducts, loadProductPage,
-    activeBranch, selectedBranchId, activePromotions
+    activeBranch, selectedBranchId, activePromotions, setAppliedCoupon, setIsCartOpen
   } = useApp();
   const productHeroSlides = useMemo(() => createProductHeroSlides(products), [products]);
   const [activeCategory, setActiveCategory] = useState('all');
@@ -718,6 +718,22 @@ export default function StorefrontPage({ onSelectProduct, onOpenCakeCustomizer, 
                     <p style={{ margin: '0 0 12px', color: '#64748b', fontSize: '0.82rem' }}>
                       Ends {new Date(promotion.endDateUtc).toLocaleString()}
                     </p>
+                  )}
+                  {promotion.couponCode && (
+                    <div style={{ margin: '10px 0 12px', padding: '8px 12px', background: '#fff7ed', border: '1.5px dashed #ea580c', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#c2410c' }}>Promo Code: {promotion.couponCode}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          try { navigator.clipboard?.writeText(promotion.couponCode); } catch {}
+                          setAppliedCoupon({ code: promotion.couponCode });
+                          setIsCartOpen(true);
+                        }}
+                        style={{ fontSize: '0.74rem', background: '#ea580c', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontWeight: 700 }}
+                      >
+                        Apply Code
+                      </button>
+                    </div>
                   )}
                   <button type="button" className="button button--primary" onClick={() => handleSelectCategory('all')}>
                     View menu <span>→</span>

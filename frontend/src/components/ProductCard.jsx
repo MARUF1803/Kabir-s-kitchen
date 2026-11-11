@@ -3,7 +3,8 @@ import { Clock, Star, Flame, Plus, Sparkles, Cake } from 'lucide-react';
 import { useApp } from '../context/useApp';
 
 export default function ProductCard({ product, onSelectProduct, onOpenCakeCustomizer }) {
-  const { selectedBranchId, addToCart, getProductUnitPrice } = useApp();
+  const { selectedBranchId, addToCart, getProductUnitPrice, getProductPromotion } = useApp();
+  const promotion = getProductPromotion?.(product);
   const basePrice = product.branchPrices?.[selectedBranchId] || product.basePrice;
   const effectivePrice = getProductUnitPrice(product);
   const isBranchDiscounted = effectivePrice < product.basePrice;
@@ -30,6 +31,11 @@ export default function ProductCard({ product, onSelectProduct, onOpenCakeCustom
           <span className={product.isVeg ? 'badge badge--veg' : 'badge badge--nonveg'}>{product.isVeg ? '🌿 Veg' : '🍖 Non-veg'}</span>
           {product.isSpicy && <span className="badge badge--spicy"><Flame size={11} /> Spicy</span>}
           {product.isPopular && <span className="badge badge--popular"><Sparkles size={11} /> Best seller</span>}
+          {promotion && (
+            <span className="badge badge--offer" style={{ background: '#ea580c', color: '#fff', fontWeight: 800 }}>
+              <Sparkles size={11} /> {promotion.discountType === 'Percentage' ? `${promotion.discountValue}% OFF` : `৳${promotion.discountValue} OFF`}
+            </span>
+          )}
         </div>
         <span className="product-card__time"><Clock size={13} /> {product.prepTime} min</span>
       </div>

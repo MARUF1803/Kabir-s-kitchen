@@ -214,11 +214,13 @@ export function AppProvider({ children }) {
     if (!product) return null;
     return activePromotions.find(promotion => {
       if (product.isCustomCake && !promotion.includeCustomCakes) return false;
-      if (promotion.discountType !== 'Percentage' || promotion.maximumDiscountAmount != null ||
-          promotion.minimumOrderAmount > 0 || promotion.targetType === 'Variant') return false;
+      if (promotion.couponCode) return false; // Coupon-code discounts apply via code entry
       if (promotion.targetType === 'AllItems') return true;
       if (promotion.targetType === 'Product') return Number(promotion.menuItemId) === Number(product.id);
-      if (promotion.targetType === 'Category') return Number(promotion.categoryId) === Number(product.productCategoryId);
+      if (promotion.targetType === 'Category') {
+        const catId = Number(product.productCategoryId || product.categoryId);
+        return catId > 0 && Number(promotion.categoryId) === catId;
+      }
       return false;
     }) || null;
   }, [activePromotions]);

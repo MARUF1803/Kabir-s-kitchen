@@ -217,12 +217,40 @@ export default function CartDrawer({ onProceedToCheckout }) {
               </button>
             </form>
             {appliedCoupon && (
-              <div style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 700, marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Coupon '{appliedCoupon.code}' is entered. Eligibility and discount are checked in the server price quote.</span>
+              <div style={{
+                fontSize: '0.76rem',
+                fontWeight: 700,
+                marginBottom: 10,
+                padding: '8px 12px',
+                borderRadius: 8,
+                background: quoteLoading ? '#f1f5f9' : serverQuote?.discountAmount > 0 ? '#f0fdf4' : '#fffbeb',
+                border: quoteLoading ? '1px solid #cbd5e1' : serverQuote?.discountAmount > 0 ? '1px solid #86efac' : '1px solid #fde68a',
+                color: quoteLoading ? '#475569' : serverQuote?.discountAmount > 0 ? '#15803d' : '#b45309',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 8
+              }}>
+                <span>
+                  {quoteLoading
+                    ? `Verifying coupon '${appliedCoupon.code}'…`
+                    : serverQuote?.discountAmount > 0
+                      ? `✓ Coupon '${appliedCoupon.code}' applied: ৳${serverQuote.discountAmount} discount!`
+                      : `⚠️ Coupon '${appliedCoupon.code}' entered, but did not qualify for current items/spend.`}
+                </span>
                 <button
                   type="button"
                   onClick={() => setAppliedCoupon(null)}
-                  style={{ border: 'none', background: 'transparent', color: '#ef4444', cursor: 'pointer', fontSize: '0.72rem', textDecoration: 'underline' }}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    color: '#ef4444',
+                    cursor: 'pointer',
+                    fontSize: '0.74rem',
+                    fontWeight: 800,
+                    textDecoration: 'underline',
+                    flexShrink: 0
+                  }}
                 >
                   Remove
                 </button>
