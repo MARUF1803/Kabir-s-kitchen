@@ -210,6 +210,33 @@ export default function CustomerChatPage() {
             <button type="submit" className="primary-button"><LockKeyhole size={17} /> {loginMode ? 'Sign in to chat' : 'Create account & chat'}</button>
           </form>
           <button className="text-button" onClick={() => setLoginMode(value => !value)}>{loginMode ? 'Need an account? Register' : 'Already have an account? Sign in'}</button>
+
+          <div style={{ marginTop: 24, paddingTop: 18, borderTop: '1px dashed #dce8df', textAlign: 'center' }}>
+            <span style={{ fontSize: '0.74rem', color: '#64748b', display: 'block', marginBottom: 10 }}>Prefer WhatsApp without signing in?</span>
+            <a
+              href="https://wa.me/8801791665634?text=Hello%20Kabir's%20Kitchen!%20I%20have%20an%20inquiry%20about%20my%20order."
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                background: '#25D366',
+                color: '#fff',
+                padding: '9px 18px',
+                borderRadius: 10,
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                textDecoration: 'none',
+                boxShadow: '0 4px 14px rgba(37,211,102,0.3)'
+              }}
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.187-2.59-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.174.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.173.231-.144.39-.086s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824zm-3.423-14.416c-6.627 0-12 5.373-12 12 0 2.15.57 4.168 1.564 5.918l-1.657 6.05 6.223-1.632c1.69.924 3.633 1.464 5.71 1.464 6.627 0 12-5.373 12-12 0-6.627-5.373-12-12-12z"/>
+              </svg>
+              Chat on WhatsApp (01791665634)
+            </a>
+          </div>
         </section>
         <aside className="chat-auth-visual">
           <div className="chat-auth-visual__content">
@@ -251,7 +278,31 @@ export default function CustomerChatPage() {
         <section className="customer-chat-window">
           <header>
             <div><span className="support-agent"><i><Headphones size={17} /></i><div><strong>Support team</strong><small><span /> Online now</small></div></span></div>
-            <span className="chat-secure"><LockKeyhole size={14} /> Private & secure</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <a
+                href="https://wa.me/8801791665634?text=Hello%20Kabir's%20Kitchen!%20I%20am%20chatting%20about%20my%20order."
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  padding: '5px 11px',
+                  borderRadius: 20,
+                  background: '#25D366',
+                  color: '#fff',
+                  fontSize: '0.68rem',
+                  fontWeight: 700,
+                  textDecoration: 'none'
+                }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.187-2.59-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.174.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.173.231-.144.39-.086s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824zm-3.423-14.416c-6.627 0-12 5.373-12 12 0 2.15.57 4.168 1.564 5.918l-1.657 6.05 6.223-1.632c1.69.924 3.633 1.464 5.71 1.464 6.627 0 12-5.373 12-12 0-6.627-5.373-12-12-12z"/>
+                </svg>
+                WhatsApp (01791665634)
+              </a>
+              <span className="chat-secure"><LockKeyhole size={14} /> Private & secure</span>
+            </div>
           </header>
           {loading ? <div className="chat-loading">Loading conversations…</div> : selected ? (
             <>

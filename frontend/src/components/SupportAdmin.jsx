@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
-  MessageCircle, Send, UserRound, Headphones, RefreshCw, Search, Bot, Sparkles
+  MessageCircle, Send, UserRound, Headphones, RefreshCw, Search, Bot, Sparkles,
+  PanelLeftClose, PanelLeft, Info, CheckCircle2, Phone, MapPin, ShoppingBag, X,
+  Clock, AlertCircle, ChevronRight
 } from 'lucide-react';
 import { supportApi } from '../services/api';
 import { useApp } from '../context/useApp';
@@ -26,6 +28,8 @@ export default function SupportAdmin() {
   const [sending, setSending] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [error, setError] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [infoPanelOpen, setInfoPanelOpen] = useState(false);
 
   const messagesEndRef = useRef(null);
   const pollTimerRef = useRef(null);
