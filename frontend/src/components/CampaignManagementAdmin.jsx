@@ -158,7 +158,7 @@ export default function CampaignManagementAdmin() {
   useEffect(() => { load(); }, [load]);
 
   const reset = () => {
-    setForm({ ...emptyForm(), branchId: branchScoped ? String(authUser?.branchId || '') : '' });
+    setForm({ ...emptyForm(calendarTimeZone), branchId: branchScoped ? String(authUser?.branchId || '') : '' });
     setEditingId(null);
     setError('');
   };
