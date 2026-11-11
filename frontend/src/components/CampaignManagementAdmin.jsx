@@ -402,8 +402,8 @@ export default function CampaignManagementAdmin() {
           <label style={labelStyle}>Minimum order (৳)
             <input type="number" min="0" step="0.01" value={form.minimumOrderAmount} onChange={e => update('minimumOrderAmount', e.target.value)} style={inputStyle} />
           </label>
-          <label style={labelStyle}>Usage limit (optional)
-            <input type="number" min="1" step="1" value={form.usageLimit} onChange={e => update('usageLimit', e.target.value)} style={inputStyle} />
+          <label style={labelStyle}>Max Orders / Stock Limit (optional)
+            <input type="number" min="1" step="1" placeholder="e.g. 50 (auto-stops when reached)" value={form.usageLimit} onChange={e => update('usageLimit', e.target.value)} style={inputStyle} />
           </label>
           <label style={labelStyle}>Priority (higher first)
             <input type="number" value={form.priority} onChange={e => update('priority', e.target.value)} style={inputStyle} />
@@ -414,7 +414,7 @@ export default function CampaignManagementAdmin() {
               {branchOptions.map(branch => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
             </select>
           </label>
-          <label style={labelStyle}>Initial state
+          <label style={labelStyle}>Campaign Status
             <select value={form.status} onChange={e => update('status', e.target.value)} style={inputStyle}>
               {statusChoices.map(status => <option key={status}>{status}</option>)}
             </select>
@@ -521,12 +521,66 @@ export default function CampaignManagementAdmin() {
                   <td style={tdStyle}>{formatCampaignTime(campaign.startDateUtc, calendarTimeZone)}<br />to {formatCampaignTime(campaign.endDateUtc, calendarTimeZone)}{campaign.repeatWeekly && <><br /><small>Repeats weekly</small></>}</td>
                   <td style={tdStyle}>{campaign.redemptionCount}{campaign.usageLimit ? ` / ${campaign.usageLimit}` : ''}</td>
                   <td style={tdStyle}>{campaignReports.find(report => report.campaignId === campaign.id)?.orders || 0} / ৳{(campaignReports.find(report => report.campaignId === campaign.id)?.revenue || 0).toFixed(2)}</td>
-                  <td style={tdStyle}><span style={statusStyle}>{campaign.status}</span></td>
+                  <td style={tdStyle}>
+                    <span style={{
+                      display: 'inline-block',
+                      padding: '3px 10px',
+                      borderRadius: 20,
+                      fontSize: 11,
+                      fontWeight: 800,
+                      background: campaign.status === 'Active' ? '#dcfce7' : campaign.status === 'Paused' ? '#fef3c7' : campaign.status === 'Archived' ? '#fee2e2' : '#f1f5f9',
+                      color: campaign.status === 'Active' ? '#15803d' : campaign.status === 'Paused' ? '#b45309' : campaign.status === 'Archived' ? '#b91c1c' : '#475569',
+                      border: `1px solid ${campaign.status === 'Active' ? '#86efac' : campaign.status === 'Paused' ? '#fde68a' : campaign.status === 'Archived' ? '#fecdd3' : '#cbd5e1'}`
+                    }}>
+                      ● {campaign.status}
+                    </span>
+                  </td>
                   <td style={tdStyle}>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                      <button type="button" onClick={() => edit(campaign)} style={smallButton}>Edit</button>
-                      {campaign.status !== 'Archived' && <button type="button" onClick={() => changeStatus(campaign, campaign.status === 'Paused' ? 'Active' : 'Paused')} style={smallButton}>{campaign.status === 'Paused' ? 'Resume' : 'Pause'}</button>}
-                      {campaign.status !== 'Archived' && <button type="button" onClick={() => changeStatus(campaign, 'Archived')} style={smallButton}>Archive</button>}
+                      <button
+                        type="button"
+                        onClick={() => edit(campaign)}
+                        style={{ ...smallButton, fontWeight: 700 }}
+                      >
+                        ✏️ Edit
+                      </button>
+
+                      {campaign.status !== 'Archived' && (
+                        <button
+                          type="button"
+                          onClick={() => changeStatus(campaign, campaign.status === 'Paused' ? 'Active' : 'Paused')}
+                          style={{
+                            ...smallButton,
+                            fontWeight: 800,
+                            background: campaign.status === 'Paused' ? '#dcfce7' : '#fffbeb',
+                            color: campaign.status === 'Paused' ? '#15803d' : '#b45309',
+                            borderColor: campaign.status === 'Paused' ? '#86efac' : '#fde68a'
+                          }}
+                          title={campaign.status === 'Paused' ? 'Turn this offer back ON' : 'Immediately STOP this offer'}
+                        >
+                          {campaign.status === 'Paused' ? '▶ Resume (Turn ON)' : '⏸ Pause (Turn OFF)'}
+                        </button>
+                      )}
+
+                      {campaign.status !== 'Archived' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm(`Are you sure you want to permanently archive "${campaign.name}"?`)) {
+                              changeStatus(campaign, 'Archived');
+                            }
+                          }}
+                          style={{
+                            ...smallButton,
+                            fontWeight: 700,
+                            background: '#fff1f2',
+                            color: '#b91c1c',
+                            borderColor: '#fecdd3'
+                          }}
+                        >
+                          🗑️ Archive
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
