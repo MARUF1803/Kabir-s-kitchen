@@ -8,28 +8,40 @@ import {
   utcToRestaurantDateTimeInput
 } from '../utils/restaurantTime';
 
-const emptyForm = () => ({
-  name: '',
-  description: '',
-  discountType: 'Percentage',
-  discountValue: '',
-  maximumDiscountAmount: '',
-  targetType: 'AllItems',
-  menuItemId: '',
-  menuItemVariantId: '',
-  categoryId: '',
-  branchId: '',
-  couponCode: '',
-  minimumOrderAmount: 0,
-  usageLimit: '',
-  priority: 0,
-  allowStacking: false,
-  includeCustomCakes: false,
-  repeatWeekly: false,
-  status: 'Draft',
-  startDateUtc: '',
-  endDateUtc: ''
-});
+const defaultSchedule = (timeZone = 'Asia/Dhaka') => {
+  const now = new Date();
+  const plus7Days = new Date(Date.now() + 7 * 86400000);
+  return {
+    start: utcToRestaurantDateTimeInput(now, timeZone),
+    end: utcToRestaurantDateTimeInput(plus7Days, timeZone)
+  };
+};
+
+const emptyForm = (timeZone = 'Asia/Dhaka') => {
+  const schedule = defaultSchedule(timeZone);
+  return {
+    name: '',
+    description: '',
+    discountType: 'Percentage',
+    discountValue: '',
+    maximumDiscountAmount: '',
+    targetType: 'AllItems',
+    menuItemId: '',
+    menuItemVariantId: '',
+    categoryId: '',
+    branchId: '',
+    couponCode: '',
+    minimumOrderAmount: 0,
+    usageLimit: '',
+    priority: 100,
+    allowStacking: false,
+    includeCustomCakes: false,
+    repeatWeekly: false,
+    status: 'Active',
+    startDateUtc: schedule.start,
+    endDateUtc: schedule.end
+  };
+};
 
 const enumValues = {
   Percentage: 1,
@@ -408,11 +420,77 @@ export default function CampaignManagementAdmin() {
             </select>
           </label>
           <label style={labelStyle}>Starts ({calendarTimeZone})
-            <input type="datetime-local" required value={form.startDateUtc} onChange={e => update('startDateUtc', e.target.value)} style={inputStyle} />
+            <input
+              type="datetime-local"
+              required
+              value={form.startDateUtc}
+              onChange={e => {
+                let v = e.target.value;
+                if (v && v.length === 10) v = `${v}T00:00`;
+                update('startDateUtc', v);
+              }}
+              style={inputStyle}
+            />
           </label>
           <label style={labelStyle}>Ends ({calendarTimeZone})
-            <input type="datetime-local" required value={form.endDateUtc} onChange={e => update('endDateUtc', e.target.value)} style={inputStyle} />
+            <input
+              type="datetime-local"
+              required
+              value={form.endDateUtc}
+              onChange={e => {
+                let v = e.target.value;
+                if (v && v.length === 10) v = `${v}T23:59`;
+                update('endDateUtc', v);
+              }}
+              style={inputStyle}
+            />
           </label>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '8px 0 14px' }}>
+          <span style={{ fontSize: 12, color: '#64748b', fontWeight: 700 }}>Quick Schedule:</span>
+          <button
+            type="button"
+            onClick={() => {
+              const now = new Date();
+              const y = now.getFullYear();
+              const m = String(now.getMonth() + 1).padStart(2, '0');
+              const d = String(now.getDate()).padStart(2, '0');
+              setForm(f => ({ ...f, startDateUtc: `${y}-${m}-${d}T00:00`, endDateUtc: `${y}-${m}-${d}T23:59` }));
+            }}
+            style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontWeight: 600 }}
+          >
+            Today Only
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const now = new Date();
+              const plus7 = new Date(Date.now() + 7 * 86400000);
+              setForm(f => ({
+                ...f,
+                startDateUtc: utcToRestaurantDateTimeInput(now, calendarTimeZone),
+                endDateUtc: utcToRestaurantDateTimeInput(plus7, calendarTimeZone)
+              }));
+            }}
+            style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontWeight: 600 }}
+          >
+            7 Days
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const now = new Date();
+              const plus30 = new Date(Date.now() + 30 * 86400000);
+              setForm(f => ({
+                ...f,
+                startDateUtc: utcToRestaurantDateTimeInput(now, calendarTimeZone),
+                endDateUtc: utcToRestaurantDateTimeInput(plus30, calendarTimeZone)
+              }));
+            }}
+            style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontWeight: 600 }}
+          >
+            30 Days
+          </button>
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18, margin: '16px 0' }}>
           <label><input type="checkbox" checked={false} disabled /> Stacking is disabled to prevent unintended discounts.</label>
