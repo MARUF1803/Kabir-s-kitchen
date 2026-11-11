@@ -8,12 +8,16 @@ import {
   utcToRestaurantDateTimeInput
 } from '../utils/restaurantTime';
 
+const getTodayDhakaDate = (timeZone = 'Asia/Dhaka') =>
+  new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+
 const defaultSchedule = (timeZone = 'Asia/Dhaka') => {
-  const now = new Date();
-  const plus7Days = new Date(Date.now() + 7 * 86400000);
+  const startDate = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+  const startTime = new Intl.DateTimeFormat('en-GB', { timeZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date());
+  const endDate = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(Date.now() + 7 * 86400000));
   return {
-    start: utcToRestaurantDateTimeInput(now, timeZone),
-    end: utcToRestaurantDateTimeInput(plus7Days, timeZone)
+    start: `${startDate}T${startTime}`,
+    end: `${endDate}T23:59`
   };
 };
 
@@ -154,8 +158,25 @@ export default function CampaignManagementAdmin() {
     }
   }, []);
 
-  // oxlint-disable-next-line react/set-state-in-effect -- Load synchronizes the view with persisted campaigns.
-  useEffect(() => { load(); }, [load]);
+  // On mount: load data, then refresh form dates using the timezone from the server response.
+  useEffect(() => {
+    let cancelled = false;
+    async function init() {
+      await load();
+      if (cancelled) return;
+      setCalendarTimeZone(tz => {
+        const sched = defaultSchedule(tz);
+        setForm(current => {
+          if (current.__editingId) return current;
+          return { ...current, startDateUtc: sched.start, endDateUtc: sched.end };
+        });
+        return tz;
+      });
+    }
+    init();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const reset = () => {
     setForm({ ...emptyForm(calendarTimeZone), branchId: branchScoped ? String(authUser?.branchId || '') : '' });
@@ -419,43 +440,66 @@ export default function CampaignManagementAdmin() {
               {statusChoices.map(status => <option key={status}>{status}</option>)}
             </select>
           </label>
-          <label style={labelStyle}>Starts ({calendarTimeZone})
-            <input
-              type="datetime-local"
-              required
-              value={form.startDateUtc}
-              onChange={e => {
-                let v = e.target.value;
-                if (v && v.length === 10) v = `${v}T00:00`;
-                update('startDateUtc', v);
-              }}
-              style={inputStyle}
-            />
-          </label>
-          <label style={labelStyle}>Ends ({calendarTimeZone})
-            <input
-              type="datetime-local"
-              required
-              value={form.endDateUtc}
-              onChange={e => {
-                let v = e.target.value;
-                if (v && v.length === 10) v = `${v}T23:59`;
-                update('endDateUtc', v);
-              }}
-              style={inputStyle}
-            />
-          </label>
+          <div>
+            <label style={labelStyle}>Starts ({calendarTimeZone})</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: 6 }}>
+              <input
+                type="date"
+                required
+                value={form.startDateUtc ? form.startDateUtc.split('T')[0] : ''}
+                onChange={e => {
+                  const d = e.target.value;
+                  const t = form.startDateUtc && form.startDateUtc.includes('T') ? form.startDateUtc.split('T')[1] : '00:00';
+                  update('startDateUtc', d ? `${d}T${t}` : '');
+                }}
+                style={inputStyle}
+              />
+              <input
+                type="time"
+                value={form.startDateUtc && form.startDateUtc.includes('T') ? form.startDateUtc.split('T')[1] : '00:00'}
+                onChange={e => {
+                  const t = e.target.value || '00:00';
+                  const d = form.startDateUtc ? form.startDateUtc.split('T')[0] : getTodayDhakaDate(calendarTimeZone);
+                  update('startDateUtc', `${d}T${t}`);
+                }}
+                style={inputStyle}
+              />
+            </div>
+          </div>
+          <div>
+            <label style={labelStyle}>Ends ({calendarTimeZone})</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: 6 }}>
+              <input
+                type="date"
+                required
+                value={form.endDateUtc ? form.endDateUtc.split('T')[0] : ''}
+                onChange={e => {
+                  const d = e.target.value;
+                  const t = form.endDateUtc && form.endDateUtc.includes('T') ? form.endDateUtc.split('T')[1] : '23:59';
+                  update('endDateUtc', d ? `${d}T${t}` : '');
+                }}
+                style={inputStyle}
+              />
+              <input
+                type="time"
+                value={form.endDateUtc && form.endDateUtc.includes('T') ? form.endDateUtc.split('T')[1] : '23:59'}
+                onChange={e => {
+                  const t = e.target.value || '23:59';
+                  const d = form.endDateUtc ? form.endDateUtc.split('T')[0] : getTodayDhakaDate(calendarTimeZone);
+                  update('endDateUtc', `${d}T${t}`);
+                }}
+                style={inputStyle}
+              />
+            </div>
+          </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '8px 0 14px' }}>
           <span style={{ fontSize: 12, color: '#64748b', fontWeight: 700 }}>Quick Schedule:</span>
           <button
             type="button"
             onClick={() => {
-              const now = new Date();
-              const y = now.getFullYear();
-              const m = String(now.getMonth() + 1).padStart(2, '0');
-              const d = String(now.getDate()).padStart(2, '0');
-              setForm(f => ({ ...f, startDateUtc: `${y}-${m}-${d}T00:00`, endDateUtc: `${y}-${m}-${d}T23:59` }));
+              const today = getTodayDhakaDate(calendarTimeZone);
+              setForm(f => ({ ...f, startDateUtc: `${today}T00:00`, endDateUtc: `${today}T23:59` }));
             }}
             style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontWeight: 600 }}
           >
@@ -464,13 +508,9 @@ export default function CampaignManagementAdmin() {
           <button
             type="button"
             onClick={() => {
-              const now = new Date();
-              const plus7 = new Date(Date.now() + 7 * 86400000);
-              setForm(f => ({
-                ...f,
-                startDateUtc: utcToRestaurantDateTimeInput(now, calendarTimeZone),
-                endDateUtc: utcToRestaurantDateTimeInput(plus7, calendarTimeZone)
-              }));
+              const today = getTodayDhakaDate(calendarTimeZone);
+              const plus7 = new Intl.DateTimeFormat('en-CA', { timeZone: calendarTimeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(Date.now() + 7 * 86400000));
+              setForm(f => ({ ...f, startDateUtc: `${today}T00:00`, endDateUtc: `${plus7}T23:59` }));
             }}
             style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontWeight: 600 }}
           >
@@ -479,13 +519,9 @@ export default function CampaignManagementAdmin() {
           <button
             type="button"
             onClick={() => {
-              const now = new Date();
-              const plus30 = new Date(Date.now() + 30 * 86400000);
-              setForm(f => ({
-                ...f,
-                startDateUtc: utcToRestaurantDateTimeInput(now, calendarTimeZone),
-                endDateUtc: utcToRestaurantDateTimeInput(plus30, calendarTimeZone)
-              }));
+              const today = getTodayDhakaDate(calendarTimeZone);
+              const plus30 = new Intl.DateTimeFormat('en-CA', { timeZone: calendarTimeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(Date.now() + 30 * 86400000));
+              setForm(f => ({ ...f, startDateUtc: `${today}T00:00`, endDateUtc: `${plus30}T23:59` }));
             }}
             style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontWeight: 600 }}
           >

@@ -5,9 +5,18 @@ import { useApp } from '../context/useApp';
 import { restaurantDateTimeToUtc, utcToRestaurantDateTimeInput } from '../utils/restaurantTime';
 import './HeroBannerAdmin.css';
 
+const defaultBannerDates = (timeZone = 'Asia/Dhaka') => {
+  const now = new Date();
+  const plus7 = new Date(Date.now() + 7 * 86400000);
+  return {
+    start: utcToRestaurantDateTimeInput(now, timeZone),
+    end: utcToRestaurantDateTimeInput(plus7, timeZone)
+  };
+};
+
 const emptyForm = {
   title: '', subtitle: '', buttonText: 'Order now', buttonLink: '#menu', displayOrder: 0,
-  isActive: true, startDate: '', endDate: '', branchId: '',
+  isActive: true, startDate: defaultBannerDates().start, endDate: defaultBannerDates().end, branchId: '',
   mediaType: 'Image', mediaUrl: '', posterUrl: '', altText: '', promotionCampaignId: ''
 };
 

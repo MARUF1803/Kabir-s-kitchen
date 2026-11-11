@@ -340,7 +340,7 @@ export default function CheckoutModal({ isOpen, onClose, onOrderPlaced }) {
               {priceQuote?.discountAmount > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: '#16a34a', fontWeight: 700 }}>
                   <span>Offer Discount</span>
-                  <span>-৳${priceQuote.discountAmount}</span>
+                  <span>-৳{priceQuote.discountAmount}</span>
                 </div>
               )}
 
