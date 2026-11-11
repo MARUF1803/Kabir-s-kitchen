@@ -977,59 +977,97 @@ export default function StorefrontPage({ onSelectProduct, onOpenCakeCustomizer, 
         </div>
       </section>
 
-      {/* ─── 11. FOOTER + SUPPORT CHAT & WHATSAPP TRIGGERS ─── */}
-      <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 90, display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-end' }}>
-        {/* WhatsApp Direct Chat Button */}
+      {/* ─── 11. COMPACT FLOATING SUPPORT BUTTONS (WHATSAPP & LIVE CHAT) ─── */}
+      <div
+        style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          zIndex: 99,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px',
+          alignItems: 'center'
+        }}
+      >
+        {/* WhatsApp Circular Icon Button */}
         <a
           href="https://wa.me/8801791665634?text=Hello%20Kabir's%20Kitchen!%20I%20have%20an%20inquiry%20about%20your%20food%20and%20orders."
           target="_blank"
           rel="noopener noreferrer"
+          title="Chat on WhatsApp"
+          aria-label="Chat on WhatsApp"
           style={{
+            width: '46px',
+            height: '46px',
+            borderRadius: '50%',
             background: '#25D366',
             color: '#fff',
-            borderRadius: '50px',
-            padding: '10px 18px',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            fontWeight: 800,
-            fontSize: '0.84rem',
-            textDecoration: 'none',
-            boxShadow: '0 8px 24px rgba(37,211,102,0.35)',
-            transition: 'transform 0.15s ease'
+            justifyContent: 'center',
+            boxShadow: '0 4px 16px rgba(37,211,102,0.4)',
+            transition: 'all 0.2s ease',
+            textDecoration: 'none'
           }}
-          onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-          onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+          onMouseEnter={e => {
+            e.currentTarget.style.transform = 'scale(1.1)';
+            e.currentTarget.style.boxShadow = '0 6px 20px rgba(37,211,102,0.6)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.boxShadow = '0 4px 16px rgba(37,211,102,0.4)';
+          }}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.187-2.59-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.174.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.173.231-.144.39-.086s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824zm-3.423-14.416c-6.627 0-12 5.373-12 12 0 2.15.57 4.168 1.564 5.918l-1.657 6.05 6.223-1.632c1.69.924 3.633 1.464 5.71 1.464 6.627 0 12-5.373 12-12 0-6.627-5.373-12-12-12z"/>
           </svg>
-          <span>WhatsApp (01791665634)</span>
         </a>
 
-        {/* Live Chat Web Button */}
+        {/* Live Chat Circular Icon Button */}
         <button
+          type="button"
           onClick={onOpenChat}
+          title="Live Support Chat"
+          aria-label="Live Support Chat"
           style={{
-            background: 'linear-gradient(135deg, #0c251c 0%, #153c2e 100%)',
-            color: '#fff',
-            border: '2px solid rgba(212, 175, 55, 0.4)',
-            borderRadius: '50px',
-            padding: '11px 20px',
+            width: '46px',
+            height: '46px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #071c14 0%, #0f3828 100%)',
+            color: '#d4af37',
+            border: '1.5px solid rgba(212,175,55,0.4)',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            fontWeight: 700,
-            fontSize: '0.84rem',
+            justifyContent: 'center',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
             cursor: 'pointer',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
-            transition: 'transform 0.15s ease'
+            transition: 'all 0.2s ease',
+            position: 'relative'
           }}
-          onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-          onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+          onMouseEnter={e => {
+            e.currentTarget.style.transform = 'scale(1.1)';
+            e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.45)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.3)';
+          }}
         >
-          <MessageCircle size={18} style={{ color: '#d4af37' }} />
-          <span>Live Support Chat</span>
+          <MessageCircle size={21} />
+          {/* Online green indicator badge */}
+          <span
+            style={{
+              position: 'absolute',
+              top: '2px',
+              right: '2px',
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              background: '#22c55e',
+              border: '2px solid #071c14'
+            }}
+          />
         </button>
       </div>
     </main>
