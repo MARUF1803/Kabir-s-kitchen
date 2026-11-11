@@ -187,11 +187,11 @@ export default function SupportAdmin() {
   };
 
   return (
-    <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', overflow: 'hidden', display: 'grid', gridTemplateColumns: '360px 1fr', minHeight: '680px', height: '76vh' }}>
+    <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', overflow: 'hidden', display: 'grid', gridTemplateColumns: 'minmax(280px, 340px) minmax(0, 1fr)', minHeight: '680px', height: 'calc(100vh - 180px)', width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
       {error && <div role="alert" style={{ gridColumn: '1 / -1', padding: '10px 16px', color: '#b91c1c', background: '#fef2f2' }}>{error}</div>}
       
       {/* ── Left Sidebar: Conversations ── */}
-      <aside style={{ borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', background: '#f8fafc' }}>
+      <aside style={{ borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', background: '#f8fafc', minWidth: 0, overflow: 'hidden' }}>
         {/* Header */}
         <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', background: '#fff' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -316,7 +316,7 @@ export default function SupportAdmin() {
       </aside>
 
       {/* ── Right Panel: Chat Thread & Reply ── */}
-      <section style={{ display: 'flex', flexDirection: 'column', background: '#fff' }}>
+      <section style={{ display: 'flex', flexDirection: 'column', background: '#fff', minWidth: 0, overflow: 'hidden' }}>
         {selectedConversation ? (
           <>
             {/* Header */}
@@ -327,7 +327,7 @@ export default function SupportAdmin() {
                     {selectedConversation.customerName || 'Customer'}
                   </h3>
                   <span style={{ fontSize: '0.72rem', background: '#f1f5f9', color: '#475569', padding: '2px 8px', borderRadius: 12, fontWeight: 600 }}>
-                    {selectedConversation.branchName || activeBranch.name}
+                    {selectedConversation.branchName || activeBranch?.name || 'Branch'}
                   </span>
                   {selectedConversation.orderNumber && (
                     <span style={{ fontSize: '0.72rem', background: 'rgba(234,88,12,0.1)', color: '#ea580c', padding: '2px 8px', borderRadius: 12, fontWeight: 700 }}>

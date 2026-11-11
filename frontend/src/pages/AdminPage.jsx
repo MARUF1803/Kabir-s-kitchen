@@ -278,84 +278,87 @@ export default function AdminPage() {
   };
 
   return (
-    <div style={{ minHeight:'100vh', background:'#f8fafc', fontFamily:"'Plus Jakarta Sans', system-ui, sans-serif" }} id="admin-page">
-      {/* ── Sidebar / Top header ── */}
-      <header style={{
-        background: 'linear-gradient(135deg, #071c14 0%, #0c2e1e 100%)',
-        borderBottom: '1px solid rgba(212,175,55,0.2)',
-        padding: '0 28px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        minHeight: '64px', height: 'auto', gap: '16px', flexWrap: 'wrap',
-        position: 'sticky', top: 0, zIndex: 50, boxSizing: 'border-box'
-      }}>
-        {/* Brand */}
-        <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-          <div style={{ width:36, height:36, borderRadius:10, background:'linear-gradient(135deg,#071c14,#ea580c)', display:'flex', alignItems:'center', justifyContent:'center', color:'#d4af37' }}>
-            <ChefHat size={19} />
-          </div>
-          <div>
-            <strong style={{ color:'#fff', fontFamily:"'Playfair Display',serif", fontSize:'1rem' }}>Kabir's Kitchen</strong>
-            <div style={{ color:'#d4af37', fontSize:'0.62rem', fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase' }}>Admin ERP</div>
-          </div>
-        </div>
-
-        {/* Branch indicator */}
-        <div style={{ display:'flex', alignItems:'center', gap:'6px', background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)', padding:'6px 14px', borderRadius:10 }}>
-          <MapPin size={14} style={{ color:'#ea580c' }} />
-          <span style={{ color:'#c9d8ce', fontSize:'0.78rem', fontWeight:600 }}>{activeBranch?.name || 'Branch unavailable'}</span>
-        </div>
-
-        {/* User + actions */}
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'8px', flexWrap:'wrap', flex:'1 1 280px', minWidth:0 }}>
-          <button
-            onClick={() => setCurrentMode('kds')}
-            style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', color:'rgba(255,255,255,0.7)', padding:'6px 14px', borderRadius:9, fontSize:'0.75rem', fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:'6px' }}
-          >
-            <ChefHat size={14} /> KDS
-          </button>
-          <button
-            onClick={() => setCurrentMode('pos')}
-            style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', color:'rgba(255,255,255,0.7)', padding:'6px 14px', borderRadius:9, fontSize:'0.75rem', fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:'6px' }}
-          >
-            <ShoppingBag size={14} /> POS
-          </button>
-          <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-            <div style={{ width:32, height:32, borderRadius:'50%', background:'linear-gradient(135deg,#071c14,#ea580c)', display:'flex', alignItems:'center', justifyContent:'center', color:'#d4af37', fontSize:'0.72rem', fontWeight:800 }}>
-              {initials}
+    <div style={{ minHeight:'100vh', background:'#f8fafc', fontFamily:"'Plus Jakarta Sans', system-ui, sans-serif", width:'100%', maxWidth:'100vw', overflowX:'hidden' }} id="admin-page">
+      {/* ── Sticky Top Header & Tabs ── */}
+      <div style={{ position: 'sticky', top: 0, zIndex: 50, background: '#fff', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
+        <header style={{
+          background: 'linear-gradient(135deg, #071c14 0%, #0c2e1e 100%)',
+          borderBottom: '1px solid rgba(212,175,55,0.2)',
+          padding: '0 28px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          minHeight: '64px', height: 'auto', gap: '16px', flexWrap: 'wrap',
+          boxSizing: 'border-box'
+        }}>
+          {/* Brand */}
+          <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
+            <div style={{ width:36, height:36, borderRadius:10, background:'linear-gradient(135deg,#071c14,#ea580c)', display:'flex', alignItems:'center', justifyContent:'center', color:'#d4af37' }}>
+              <ChefHat size={19} />
             </div>
             <div>
-              <div style={{ color:'#fff', fontSize:'0.76rem', fontWeight:700 }}>{displayName}</div>
-              <div style={{ color:'#d4af37', fontSize:'0.62rem' }}>{authUser?.role}</div>
+              <strong style={{ color:'#fff', fontFamily:"'Playfair Display',serif", fontSize:'1rem' }}>Kabir's Kitchen</strong>
+              <div style={{ color:'#d4af37', fontSize:'0.62rem', fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase' }}>Admin ERP</div>
             </div>
           </div>
-          <button onClick={signOut} style={{ background:'rgba(239,68,68,0.1)', border:'1px solid rgba(239,68,68,0.2)', color:'#f87171', padding:'6px 12px', borderRadius:9, fontSize:'0.72rem', fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:'5px' }}>
-            <LogOut size={13} /> Out
-          </button>
-          <button onClick={() => setCurrentMode('customer')} style={{ background:'transparent', border:'1px solid rgba(255,255,255,0.12)', color:'rgba(255,255,255,0.5)', padding:'6px 12px', borderRadius:9, fontSize:'0.72rem', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:'5px' }}>
-            <ArrowLeft size={13} /> Store
-          </button>
-        </div>
-      </header>
 
-      {/* ── Tabs ── */}
-      <div style={{ background:'#fff', borderBottom:'1px solid #e2e8f0', padding:'0 12px', display:'flex', gap:'4px', overflowX:'auto', width:'100%', maxWidth:'100%', boxSizing:'border-box' }}>
-        {TABS.map(t => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            style={{
-              padding: '14px 18px', border: 'none', background:'transparent',
-              fontSize: '0.84rem', fontWeight: 700, cursor: 'pointer',
-              color: tab === t ? '#0c251c' : '#64748b',
-              borderBottom: tab === t ? '2.5px solid #ea580c' : '2.5px solid transparent',
-              transition: 'all 0.15s', whiteSpace: 'nowrap', fontFamily:'inherit'
-            }}
-          >{t}</button>
-        ))}
+          {/* Branch indicator */}
+          <div style={{ display:'flex', alignItems:'center', gap:'6px', background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)', padding:'6px 14px', borderRadius:10 }}>
+            <MapPin size={14} style={{ color:'#ea580c' }} />
+            <span style={{ color:'#c9d8ce', fontSize:'0.78rem', fontWeight:600 }}>{activeBranch?.name || 'Branch unavailable'}</span>
+          </div>
+
+          {/* User + actions */}
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'8px', flexWrap:'wrap', flex:'1 1 280px', minWidth:0 }}>
+            <button
+              onClick={() => setCurrentMode('kds')}
+              style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', color:'rgba(255,255,255,0.7)', padding:'6px 14px', borderRadius:9, fontSize:'0.75rem', fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:'6px' }}
+            >
+              <ChefHat size={14} /> KDS
+            </button>
+            <button
+              onClick={() => setCurrentMode('pos')}
+              style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', color:'rgba(255,255,255,0.7)', padding:'6px 14px', borderRadius:9, fontSize:'0.75rem', fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:'6px' }}
+            >
+              <ShoppingBag size={14} /> POS
+            </button>
+            <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+              <div style={{ width:32, height:32, borderRadius:'50%', background:'linear-gradient(135deg,#071c14,#ea580c)', display:'flex', alignItems:'center', justifyContent:'center', color:'#d4af37', fontSize:'0.72rem', fontWeight:800 }}>
+                {initials}
+              </div>
+              <div>
+                <div style={{ color:'#fff', fontSize:'0.76rem', fontWeight:700 }}>{displayName}</div>
+                <div style={{ color:'#d4af37', fontSize:'0.62rem' }}>{authUser?.role}</div>
+              </div>
+            </div>
+            <button onClick={signOut} style={{ background:'rgba(239,68,68,0.1)', border:'1px solid rgba(239,68,68,0.2)', color:'#f87171', padding:'6px 12px', borderRadius:9, fontSize:'0.72rem', fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:'5px' }}>
+              <LogOut size={13} /> Out
+            </button>
+            <button onClick={() => setCurrentMode('customer')} style={{ background:'transparent', border:'1px solid rgba(255,255,255,0.12)', color:'rgba(255,255,255,0.5)', padding:'6px 12px', borderRadius:9, fontSize:'0.72rem', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:'5px' }}>
+              <ArrowLeft size={13} /> Store
+            </button>
+          </div>
+        </header>
+
+        {/* ── Tabs ── */}
+        <div style={{ background:'#fff', borderBottom:'1px solid #e2e8f0', padding:'0 16px', display:'flex', gap:'4px', overflowX:'auto', width:'100%', maxWidth:'100%', boxSizing:'border-box' }}>
+          {TABS.map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              style={{
+                padding: '12px 18px', border: 'none', background:'transparent',
+                fontSize: '0.84rem', fontWeight: tab === t ? 800 : 600, cursor: 'pointer',
+                color: tab === t ? '#ea580c' : '#64748b',
+                borderBottom: tab === t ? '3px solid #ea580c' : '3px solid transparent',
+                transition: 'all 0.15s', whiteSpace: 'nowrap', fontFamily:'inherit',
+                flexShrink: 0
+              }}
+            >{t}</button>
+          ))}
+        </div>
       </div>
 
       {/* ── Content ── */}
-      <main style={{ padding:'28px', maxWidth:'1400px', margin:'0 auto' }}>
+      <main style={{ padding:'24px 28px', maxWidth:'1400px', margin:'0 auto', width:'100%', boxSizing:'border-box' }}>
 
         {/* ── Overview Tab ── */}
         {tab === 'Overview' && (
