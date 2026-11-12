@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react';
+﻿import { lazy, Suspense, useState } from 'react';
 import { AppProvider } from './context/AppContext.jsx';
 import { useApp } from './context/useApp';
 import Navbar from './components/Navbar';
@@ -73,7 +73,7 @@ function AppContent() {
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
       {!isFullScreen && <Navbar onOpenSearch={setSearchQuery} onOpenReservation={() => setReservationOpen(true)} />}
-      <Suspense fallback={<div role="status" style={{ padding: 24, textAlign: 'center' }}>Loading page…</div>}>
+      <Suspense fallback={<div role="status" style={{ padding: 24, textAlign: 'center' }}>Loading page...</div>}>
         {renderPage()}
       </Suspense>
       {!isFullScreen && <Footer />}
