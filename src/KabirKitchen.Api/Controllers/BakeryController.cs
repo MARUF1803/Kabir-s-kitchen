@@ -102,4 +102,38 @@ public class BakeryController : ControllerBase
         var plan = await _cakeService.GetAggregatedBOMPlanAsync(branchId, targetDate);
         return Ok(plan);
     }
+
+    [HttpGet("orders")]
+    [Authorize(Roles = "Admin,SuperAdmin,BranchManager,Cashier,Chef")]
+    public async Task<IActionResult> GetCakeOrders([FromQuery] long? branchId, [FromQuery] string? search)
+    {
+        if (branchId.HasValue && branchId.Value > 0 && !_currentUser.HasAccessToBranch(branchId.Value))
+        {
+            return Forbid();
+        }
+
+        var orders = await _cakeService.GetCakeOrdersAsync(branchId, search);
+        return Ok(orders);
+    }
+
+    /// <summary>
+    /// STRICT RULE: Admin ছাড়া আর কেউ কাস্টম কেকের দাম বা ডিসকাউন্ট কমাতে পারবে না।
+    /// </summary>
+    [HttpPost("apply-discount")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    public async Task<IActionResult> ApplySpecialDiscount([FromBody] ApplyCakeSpecialDiscountDto dto)
+    {
+        var branchId = await _cakeService.GetBranchIdAsync(dto.CakeCustomOrderId);
+        if (!branchId.HasValue) return NotFound(new { message = "Cake order not found." });
+        if (!_currentUser.HasAccessToBranch(branchId.Value)) return Forbid();
+
+        string adminName = _currentUser.UserEmail ?? _currentUser.UserId?.ToString() ?? "Admin";
+        var result = await _cakeService.ApplySpecialDiscountAsync(dto.CakeCustomOrderId, dto.DiscountAmount, dto.Reason, adminName);
+        if (result.IsFailure)
+        {
+            return BadRequest(new { message = result.Error });
+        }
+
+        return Ok(result.Value);
+    }
 }

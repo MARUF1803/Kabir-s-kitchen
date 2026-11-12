@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Cake, Info, CheckCircle2, MessageSquare, AlertCircle } from 'lucide-react';
+import { X, Cake, Info, CheckCircle2, MessageSquare, AlertCircle, Tag } from 'lucide-react';
 import { useApp } from '../context/useApp';
 import { CAKE_DESIGNS } from '../data/cakeDesigns';
 import { bakeryApi } from '../services/api';
@@ -35,6 +35,9 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
   const [customerName, setCustomerName] = useState(userProfile?.name || '');
   const [customerPhone, setCustomerPhone] = useState(userProfile?.phone || '');
   const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState('');
+  const [couponError, setCouponError] = useState('');
   const [bookingSuccess, setBookingSuccess] = useState(null);
   const [priceQuote, setPriceQuote] = useState(null);
   const [quoteError, setQuoteError] = useState('');
@@ -106,19 +109,32 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
       branchId: Number(activeBranch.id),
       menuItemId: Number(product.id),
       weightKg: Number(effectiveWeightKg),
-      couponCode: null
+      couponCode: appliedCoupon ? appliedCoupon.trim() : null
     }).then(quote => {
-      if (active) setPriceQuote(quote);
+      if (active) {
+        setPriceQuote(quote);
+        if (appliedCoupon && Number(quote.discountAmount) <= 0) {
+          setCouponError('Coupon applied, but gives 0 discount or does not match this cake.');
+        } else {
+          setCouponError('');
+        }
+      }
     }).catch(error => {
       if (active) {
-        setQuoteError(error.response?.data?.message || 'Could not verify this cake price with the server.');
+        const msg = error.response?.data?.message || 'Could not verify this cake price with the server.';
+        if (appliedCoupon) {
+          setCouponError(msg);
+          setAppliedCoupon('');
+        } else {
+          setQuoteError(msg);
+        }
       }
     }).finally(() => {
       if (active) setQuoteLoading(false);
     });
 
     return () => { active = false; };
-  }, [isOpen, product?.id, activeBranch.id, effectiveWeightKg]);
+  }, [isOpen, product?.id, activeBranch.id, effectiveWeightKg, appliedCoupon]);
   const selectedDesign = CAKE_DESIGNS.find(design => design.id === selectedDesignId) ?? CAKE_DESIGNS[0];
   const visibleDesigns = activeDesignCategory === 'All designs'
     ? CAKE_DESIGNS
@@ -166,7 +182,8 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
         deliverySlot,
         customerName: trimmedName,
         customerPhone: trimmedPhone,
-        deliveryAddress: deliveryAddress.trim() || null
+        deliveryAddress: deliveryAddress.trim() || null,
+        couponCode: appliedCoupon ? appliedCoupon.trim() : null
       });
       setBookingSuccess(order);
     } catch (error) {
@@ -694,6 +711,94 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
             <p style={{ fontSize: '0.8rem', color: '#92400e', lineHeight: 1.5, margin: 0 }}>
               Handcrafted custom cakes require a <strong>50% advance payment (৳{advanceRequired ?? '—'})</strong> to confirm the order and begin bakery preparation. The remaining 50% balance is payable upon delivery or pickup.
             </p>
+          </div>
+
+          {/* Promo / VIP Discount Coupon Box */}
+          <div style={{ background: '#f8fafc', padding: '12px 14px', borderRadius: 10, border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Tag size={15} color="#8b5cf6" /> Have a Promo / VIP Discount Code?
+              </span>
+              {appliedCoupon && (
+                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#059669', background: '#d1fae5', padding: '2px 8px', borderRadius: 12 }}>
+                  ✓ Code &quot;{appliedCoupon}&quot; Applied
+                </span>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                type="text"
+                placeholder="e.g. VIP200, KABIRSPECIAL..."
+                value={couponInput}
+                onChange={(e) => {
+                  setCouponInput(e.target.value.toUpperCase());
+                  setCouponError('');
+                }}
+                disabled={!!appliedCoupon}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  border: '1px solid #cbd5e1',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.5px',
+                  textTransform: 'uppercase',
+                  background: appliedCoupon ? '#f1f5f9' : '#ffffff'
+                }}
+              />
+              {appliedCoupon ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAppliedCoupon('');
+                    setCouponInput('');
+                    setCouponError('');
+                  }}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: 8,
+                    border: '1px solid #fca5a5',
+                    background: '#fef2f2',
+                    color: '#dc2626',
+                    fontSize: '0.82rem',
+                    fontWeight: 800,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Remove
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const trimmed = couponInput.trim();
+                    if (!trimmed) {
+                      setCouponError('Please enter a coupon code.');
+                      return;
+                    }
+                    setAppliedCoupon(trimmed);
+                  }}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: 8,
+                    border: 'none',
+                    background: '#8b5cf6',
+                    color: '#ffffff',
+                    fontSize: '0.82rem',
+                    fontWeight: 800,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Apply
+                </button>
+              )}
+            </div>
+            {couponError && (
+              <p style={{ margin: '6px 0 0', fontSize: '0.76rem', color: '#dc2626', fontWeight: 600 }}>
+                {couponError}
+              </p>
+            )}
           </div>
 
           {/* Summary Box */}

@@ -168,6 +168,10 @@ export const promotionsApi = {
 export const bakeryApi = {
   quoteCustomCake: (payload) => apiClient.post('/bakery/custom-cake/quote', payload).then(r => r.data),
   createCustomCake: (payload) => apiClient.post('/bakery/custom-cake', payload).then(r => r.data),
+  getCakeOrders: (branchId, search) => apiClient.get('/bakery/orders', { params: { branchId, search } }).then(r => r.data),
+  applySpecialDiscount: (payload) => apiClient.post('/bakery/apply-discount', payload).then(r => r.data),
+  verifyAdvance: (payload) => apiClient.post('/bakery/verify-advance', payload).then(r => r.data),
+  startBaking: (cakeOrderId) => apiClient.put(`/bakery/${cakeOrderId}/start-baking`).then(r => r.data),
 };
 
 export const mapMenuItemToProduct = item => ({

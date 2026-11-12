@@ -87,6 +87,12 @@ public record BakeryAggregatedBOMPlanDto(
     List<AggregatedIngredientRequirementDto> RequiredIngredients
 );
 
+public record ApplyCakeSpecialDiscountDto(
+    long CakeCustomOrderId,
+    decimal DiscountAmount,
+    string? Reason
+);
+
 public record AggregatedIngredientRequirementDto(
     string IngredientName,
     decimal TotalQuantityNeeded,

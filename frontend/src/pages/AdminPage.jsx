@@ -15,9 +15,10 @@ import SupportAdmin from '../components/SupportAdmin';
 import InventoryErpAdmin from '../components/InventoryErpAdmin';
 import ReservationAdmin from '../components/ReservationAdmin';
 import CashShiftAdmin from '../components/CashShiftAdmin';
+import CakeOrdersAdmin from '../components/CakeOrdersAdmin';
 import { usersApi, reportsApi, inventoryAdjustApi, inventoryApi, ordersApi } from '../services/api';
 
-const TABS = ['Overview', 'Orders', 'Cash Shifts', 'Reservations', 'Production ERP', 'Promotions', 'Campaigns', 'Products', 'Inventory', 'Procurement', 'Staff', 'Reports', 'Support'];
+const TABS = ['Overview', 'Orders', 'Cake Bookings', 'Cash Shifts', 'Reservations', 'Production ERP', 'Promotions', 'Campaigns', 'Products', 'Inventory', 'Procurement', 'Staff', 'Reports', 'Support'];
 
 const STATUS_COLORS = {
   Confirmed:      { bg: '#dbeafe', color: '#1d4ed8' },
@@ -485,6 +486,11 @@ export default function AdminPage() {
               </table>
             </div>
           </div>
+        )}
+
+        {/* ── Cake Bookings Tab ── */}
+        {tab === 'Cake Bookings' && (
+          <CakeOrdersAdmin activeBranchId={activeBranchId} />
         )}
 
         {/* ── Production ERP Tab ── */}

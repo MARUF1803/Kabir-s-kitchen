@@ -266,6 +266,57 @@ public class CakeOrderService
         return new BakeryAggregatedBOMPlanDto(targetDate.Date, cakes.Count, finalRequirements);
     }
 
+    public async Task<List<CakeCustomOrderResponseDto>> GetCakeOrdersAsync(long? branchId, string? search)
+    {
+        var query = _context.CakeCustomOrders
+            .Include(c => c.Branch)
+            .AsNoTracking()
+            .Where(c => !c.IsDeleted);
+
+        if (branchId.HasValue && branchId.Value > 0)
+        {
+            query = query.Where(c => c.BranchId == branchId.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var s = search.Trim().ToLower();
+            query = query.Where(c =>
+                c.CustomOrderNumber.ToLower().Contains(s) ||
+                c.CustomerName.ToLower().Contains(s) ||
+                c.CustomerPhone.Contains(s));
+        }
+
+        var list = await query
+            .OrderByDescending(c => c.CreatedAtUtc)
+            .Take(100)
+            .ToListAsync();
+
+        return list.Select(c => MapToDto(c, c.Branch?.Name ?? "Kabir's Kitchen")).ToList();
+    }
+
+    public async Task<Result<CakeCustomOrderResponseDto>> ApplySpecialDiscountAsync(long cakeOrderId, decimal discountAmount, string? reason, string adminName)
+    {
+        var cake = await _context.CakeCustomOrders.FindAsync(cakeOrderId);
+        if (cake == null) return Result<CakeCustomOrderResponseDto>.Failure("Cake order not found.");
+        if (discountAmount <= 0) return Result<CakeCustomOrderResponseDto>.Failure("Discount amount must be greater than zero.");
+        if (discountAmount > cake.EstimatedPrice) return Result<CakeCustomOrderResponseDto>.Failure("Discount cannot exceed total cake price.");
+
+        cake.DiscountAmount += discountAmount;
+        cake.EstimatedPrice = Math.Max(0m, cake.SubTotal - cake.DiscountAmount);
+        string admin = string.IsNullOrWhiteSpace(adminName) ? "Admin" : adminName.Trim();
+        string note = string.IsNullOrWhiteSpace(reason) ? "VIP Special Courtesy" : reason.Trim();
+        cake.BakerNotes = string.IsNullOrWhiteSpace(cake.BakerNotes)
+            ? $"Admin Discount: -৳{discountAmount} by {admin} ({note})"
+            : $"{cake.BakerNotes} | Admin Discount: -৳{discountAmount} by {admin} ({note})";
+
+        cake.UpdatedAtUtc = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        var branch = await _context.Branches.FindAsync(cake.BranchId);
+        return Result<CakeCustomOrderResponseDto>.Success(MapToDto(cake, branch?.Name ?? "Kabir's Kitchen"));
+    }
+
     private CakeCustomOrderResponseDto MapToDto(CakeCustomOrder c, string branchName)
     {
         return new CakeCustomOrderResponseDto(
