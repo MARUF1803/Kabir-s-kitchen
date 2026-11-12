@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Cake, Search, RefreshCw, CheckCircle2, AlertCircle, Percent, MessageSquare, ShieldAlert, Sparkles, X } from 'lucide-react';
 import { bakeryApi } from '../services/api';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../context/useApp';
 
 export default function CakeOrdersAdmin({ activeBranchId }) {
   const { authUser } = useApp();
