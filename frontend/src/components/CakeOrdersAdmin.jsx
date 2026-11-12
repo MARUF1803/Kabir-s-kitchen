@@ -298,14 +298,19 @@ export default function CakeOrdersAdmin({ activeBranchId }) {
                           </span>
                         )}
                       </div>
-                      <div style={{ fontSize: '0.78rem', color: '#b45309', marginTop: 2 }}>
-                        50% Req: <strong>৳{order.advanceRequiredAmount}</strong>
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: order.isAdvanceVerified ? '#059669' : '#64748b', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
-                        {order.isAdvanceVerified ? (
-                          <><CheckCircle2 size={13} color="#059669" /> Advance Paid: ৳{order.advancePaidAmount}</>
+                      <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: 3 }}>
+                        {order.advancePaidAmount >= order.estimatedPrice ? (
+                          <span style={{ color: '#059669', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <CheckCircle2 size={13} color="#059669" /> Fully Paid: ৳{order.advancePaidAmount} (Due: ৳0)
+                          </span>
+                        ) : order.isAdvanceVerified ? (
+                          <span style={{ color: '#059669', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <CheckCircle2 size={13} color="#059669" /> Advance Paid: ৳{order.advancePaidAmount} (Due on delivery: ৳{Math.max(0, order.estimatedPrice - order.advancePaidAmount)})
+                          </span>
                         ) : (
-                          <>Paid so far: ৳{order.advancePaidAmount}</>
+                          <span style={{ color: '#b45309' }}>
+                            Due: <strong>৳{order.estimatedPrice}</strong> (Min 50%: ৳{order.advanceRequiredAmount})
+                          </span>
                         )}
                       </div>
                     </td>
@@ -553,8 +558,46 @@ export default function CakeOrdersAdmin({ activeBranchId }) {
             </div>
 
             <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0 0 16px' }}>
-              Confirm advance received for <strong>{advanceModalOrder.customOrderNumber}</strong> ({advanceModalOrder.customerName}).
+              Confirm payment received for <strong>{advanceModalOrder.customOrderNumber}</strong> ({advanceModalOrder.customerName}).
             </p>
+
+            {/* Quick Amount Pills */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+              <button
+                type="button"
+                onClick={() => setAdvanceAmount(advanceModalOrder.estimatedPrice)}
+                style={{
+                  flex: 1,
+                  padding: '8px',
+                  borderRadius: 8,
+                  border: advanceAmount === advanceModalOrder.estimatedPrice ? '2px solid #059669' : '1px solid #cbd5e1',
+                  background: advanceAmount === advanceModalOrder.estimatedPrice ? '#ecfdf5' : '#ffffff',
+                  color: advanceAmount === advanceModalOrder.estimatedPrice ? '#059669' : '#334155',
+                  fontSize: '0.8rem',
+                  fontWeight: 800,
+                  cursor: 'pointer'
+                }}
+              >
+                Full Payment: ৳{advanceModalOrder.estimatedPrice}
+              </button>
+              <button
+                type="button"
+                onClick={() => setAdvanceAmount(advanceModalOrder.advanceRequiredAmount)}
+                style={{
+                  flex: 1,
+                  padding: '8px',
+                  borderRadius: 8,
+                  border: advanceAmount === advanceModalOrder.advanceRequiredAmount ? '2px solid #b45309' : '1px solid #cbd5e1',
+                  background: advanceAmount === advanceModalOrder.advanceRequiredAmount ? '#fffbeb' : '#ffffff',
+                  color: advanceAmount === advanceModalOrder.advanceRequiredAmount ? '#b45309' : '#334155',
+                  fontSize: '0.8rem',
+                  fontWeight: 800,
+                  cursor: 'pointer'
+                }}
+              >
+                50% Advance: ৳{advanceModalOrder.advanceRequiredAmount}
+              </button>
+            </div>
 
             <form onSubmit={handleVerifyAdvanceSubmit}>
               <div style={{ marginBottom: 14 }}>
@@ -615,3 +658,4 @@ export default function CakeOrdersAdmin({ activeBranchId }) {
     </div>
   );
 }
+
