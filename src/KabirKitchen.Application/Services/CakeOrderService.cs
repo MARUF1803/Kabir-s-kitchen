@@ -94,8 +94,8 @@ public class CakeOrderService
         string? couponCode,
         bool reserveRedemption)
     {
-        if (branchId <= 0 || menuItemId <= 0 || weightKg is <= 0 or > 50)
-            return (null, null, "Select a valid branch and custom cake with a weight between 0 and 50 kg.");
+        if (branchId <= 0 || menuItemId <= 0 || weightKg is <= 0 or > 100)
+            return (null, null, "Select a valid branch and custom cake with a weight between 0.5 and 100 kg (up to ~220 lb).");
 
         var branch = await _context.Branches.FirstOrDefaultAsync(candidate =>
             candidate.Id == branchId && candidate.IsActive && !candidate.IsDeleted);
