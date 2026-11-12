@@ -1479,3 +1479,42 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .menu-category-group__heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
 .menu-category-group__heading h3 { margin: 0; color: #2e211a; font-family: 'Playfair Display', Georgia, serif; font-size: 1.55rem; }
 .menu-category-group__heading span { color: var(--text-muted); font-size: .76rem; font-weight: 700; }
+
+/* Floating Support Action Buttons */
+.floating-whatsapp-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #25D366;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(37, 211, 102, 0.4);
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+.floating-whatsapp-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.6);
+}
+
+.floating-livechat-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #071c14 0%, #0f3828 100%);
+  color: #d4af37;
+  border: 1.5px solid rgba(212, 175, 55, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+.floating-livechat-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+}
