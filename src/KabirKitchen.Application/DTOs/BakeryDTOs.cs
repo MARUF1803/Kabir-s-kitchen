@@ -69,7 +69,17 @@ public record CakeCustomOrderResponseDto(
     decimal AdvanceRequiredAmount,
     decimal AdvancePaidAmount,
     bool IsAdvanceVerified,
-    CakeOrderStatus Status
+    CakeOrderStatus Status,
+    string? AdvancePaymentTransactionRef = null
+);
+
+public record SubmitCakePaymentProofDto(
+    long CakeCustomOrderId,
+    string PaymentMethod,
+    string SenderPhoneOrAccount,
+    string TransactionId,
+    decimal PaidAmount,
+    string? CustomerNote = null
 );
 
 public record CakeProductionCalendarSlotDto(

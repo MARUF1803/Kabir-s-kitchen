@@ -40,6 +40,23 @@ public class BakeryController : ControllerBase
         return Ok(result.Value);
     }
 
+    [HttpPost("custom-cake/submit-payment-proof")]
+    public async Task<IActionResult> SubmitPaymentProof([FromBody] SubmitCakePaymentProofDto dto)
+    {
+        if (dto.CakeCustomOrderId <= 0 || string.IsNullOrWhiteSpace(dto.TransactionId))
+        {
+            return BadRequest(new { message = "Valid Cake Order ID and Transaction ID / Reference are required." });
+        }
+
+        var result = await _cakeService.SubmitPaymentProofAsync(dto);
+        if (result.IsFailure)
+        {
+            return BadRequest(new { message = result.Error });
+        }
+
+        return Ok(result.Value);
+    }
+
     [HttpPost("verify-advance")]
     [Authorize(Roles = "Admin,SuperAdmin,BranchManager,Cashier")]
     public async Task<IActionResult> VerifyAdvancePayment([FromBody] VerifyCakeAdvancePaymentDto dto)

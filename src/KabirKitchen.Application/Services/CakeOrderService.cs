@@ -317,6 +317,26 @@ public class CakeOrderService
         return Result<CakeCustomOrderResponseDto>.Success(MapToDto(cake, branch?.Name ?? "Kabir's Kitchen"));
     }
 
+    public async Task<Result<CakeCustomOrderResponseDto>> SubmitPaymentProofAsync(SubmitCakePaymentProofDto dto)
+    {
+        var cake = await _context.CakeCustomOrders
+            .Include(c => c.Branch)
+            .FirstOrDefaultAsync(c => c.Id == dto.CakeCustomOrderId && !c.IsDeleted);
+        if (cake == null) return Result<CakeCustomOrderResponseDto>.Failure("Cake order not found.");
+
+        string cleanMethod = string.IsNullOrWhiteSpace(dto.PaymentMethod) ? "bKash" : dto.PaymentMethod.Trim();
+        string cleanTrx = dto.TransactionId?.Trim() ?? string.Empty;
+        string cleanSender = dto.SenderPhoneOrAccount?.Trim() ?? string.Empty;
+        decimal amount = dto.PaidAmount > 0 ? dto.PaidAmount : cake.AdvanceRequiredAmount;
+
+        cake.AdvancePaymentTransactionRef = $"[{cleanMethod}] Trx: {cleanTrx} | Sender: {cleanSender} | Claimed: ৳{amount}" +
+            (!string.IsNullOrWhiteSpace(dto.CustomerNote) ? $" | Note: {dto.CustomerNote.Trim()}" : "");
+        cake.UpdatedAtUtc = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        return Result<CakeCustomOrderResponseDto>.Success(MapToDto(cake, cake.Branch?.Name ?? "Dhanmondi Branch"));
+    }
+
     private CakeCustomOrderResponseDto MapToDto(CakeCustomOrder c, string branchName)
     {
         return new CakeCustomOrderResponseDto(
@@ -342,7 +362,8 @@ public class CakeOrderService
             c.AdvanceRequiredAmount,
             c.AdvancePaidAmount,
             c.IsAdvanceVerified,
-            c.Status
+            c.Status,
+            c.AdvancePaymentTransactionRef
         );
     }
 }

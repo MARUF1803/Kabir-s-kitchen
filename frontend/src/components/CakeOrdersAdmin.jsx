@@ -313,6 +313,21 @@ export default function CakeOrdersAdmin({ activeBranchId }) {
                           </span>
                         )}
                       </div>
+                      {order.advancePaymentTransactionRef && (
+                        <div style={{
+                          marginTop: 6,
+                          padding: '4px 8px',
+                          background: order.isAdvanceVerified ? '#f0fdf4' : '#fffbeb',
+                          border: `1px solid ${order.isAdvanceVerified ? '#bbf7d0' : '#fde68a'}`,
+                          borderRadius: 6,
+                          fontSize: '0.72rem',
+                          color: order.isAdvanceVerified ? '#166534' : '#92400e',
+                          wordBreak: 'break-word',
+                          maxWidth: 240
+                        }}>
+                          <strong>{order.isAdvanceVerified ? '✓ Verified Ref:' : '⚠️ Claimed Proof:'}</strong> {order.advancePaymentTransactionRef}
+                        </div>
+                      )}
                     </td>
 
                     {/* Status */}
@@ -372,14 +387,14 @@ export default function CakeOrdersAdmin({ activeBranchId }) {
                             onClick={() => {
                               setAdvanceModalOrder(order);
                               setAdvanceAmount(order.advanceRequiredAmount);
-                              setAdvanceTrxRef('');
+                              setAdvanceTrxRef(order.advancePaymentTransactionRef || '');
                               setAdvanceError('');
                             }}
                             style={{
                               padding: '5px 10px',
                               borderRadius: 6,
                               border: 'none',
-                              background: '#25D366',
+                              background: order.advancePaymentTransactionRef ? '#ea580c' : '#25D366',
                               color: '#ffffff',
                               fontSize: '0.76rem',
                               fontWeight: 800,
@@ -389,7 +404,7 @@ export default function CakeOrdersAdmin({ activeBranchId }) {
                               gap: 4
                             }}
                           >
-                            <CheckCircle2 size={13} /> Verify 50%
+                            <CheckCircle2 size={13} /> {order.advancePaymentTransactionRef ? 'Check & Verify' : 'Verify 50%'}
                           </button>
                         )}
 
@@ -560,6 +575,21 @@ export default function CakeOrdersAdmin({ activeBranchId }) {
             <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0 0 16px' }}>
               Confirm payment received for <strong>{advanceModalOrder.customOrderNumber}</strong> ({advanceModalOrder.customerName}).
             </p>
+
+            {/* Customer Claimed Payment Box */}
+            {advanceModalOrder.advancePaymentTransactionRef && !advanceModalOrder.isAdvanceVerified && (
+              <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: 12, marginBottom: 14, fontSize: '0.8rem', color: '#92400e' }}>
+                <div style={{ fontWeight: 800, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <AlertCircle size={14} color="#b45309" /> Customer Claimed Payment:
+                </div>
+                <div style={{ fontFamily: 'monospace', fontSize: '0.78rem', background: '#fef3c7', padding: '6px 8px', borderRadius: 6, wordBreak: 'break-all' }}>
+                  {advanceModalOrder.advancePaymentTransactionRef}
+                </div>
+                <div style={{ marginTop: 6, fontSize: '0.72rem', color: '#b45309' }}>
+                  * Check your mobile MFS app or cash drawer before confirming.
+                </div>
+              </div>
+            )}
 
             {/* Quick Amount Pills */}
             <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>

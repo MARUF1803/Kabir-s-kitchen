@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Cake, Info, CheckCircle2, MessageSquare, AlertCircle, Tag } from 'lucide-react';
+import { X, Cake, Info, CheckCircle2, MessageSquare, AlertCircle, Tag, CreditCard } from 'lucide-react';
 import { useApp } from '../context/useApp';
 import { CAKE_DESIGNS } from '../data/cakeDesigns';
 import { bakeryApi } from '../services/api';
@@ -45,12 +45,26 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
+  // Payment proof submission state
+  const [proofMethod, setProofMethod] = useState('bKash');
+  const [proofTrx, setProofTrx] = useState('');
+  const [proofSender, setProofSender] = useState('');
+  const [proofAmount, setProofAmount] = useState('');
+  const [proofNote, setProofNote] = useState('');
+  const [proofSubmitting, setProofSubmitting] = useState(false);
+  const [proofSubmitted, setProofSubmitted] = useState(false);
+  const [proofError, setProofError] = useState('');
+
   useEffect(() => {
     if (isOpen) {
       if (!customerName && userProfile?.name) setCustomerName(userProfile.name);
       if (!customerPhone && userProfile?.phone) setCustomerPhone(userProfile.phone);
       setBookingSuccess(null);
       setSubmitError('');
+      setProofTrx('');
+      setProofNote('');
+      setProofSubmitted(false);
+      setProofError('');
     }
   }, [isOpen, userProfile]);
 
@@ -186,10 +200,47 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
         couponCode: appliedCoupon ? appliedCoupon.trim() : null
       });
       setBookingSuccess(order);
+      setProofAmount(String(order.advanceRequired || order.advanceRequiredAmount || ''));
+      setProofSender(trimmedPhone);
+      setProofSubmitted(false);
+      setProofError('');
     } catch (error) {
       setSubmitError(error.response?.data?.message || 'Could not save the cake request. Please try again.');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleProofSubmit = async (e) => {
+    e.preventDefault();
+    if (!bookingSuccess?.id) return;
+    const cleanTrx = proofTrx.trim();
+    if (!cleanTrx) {
+      setProofError('Please enter the Transaction ID (TrxID) or sender last 4 digits.');
+      return;
+    }
+    const cleanAmount = parseFloat(proofAmount);
+    if (isNaN(cleanAmount) || cleanAmount <= 0) {
+      setProofError('Please enter a valid payment amount.');
+      return;
+    }
+
+    setProofSubmitting(true);
+    setProofError('');
+    try {
+      await bakeryApi.submitPaymentProof({
+        cakeCustomOrderId: bookingSuccess.id,
+        paymentMethod: proofMethod,
+        senderPhoneOrAccount: proofSender.trim() || customerPhone.trim(),
+        transactionId: cleanTrx,
+        paidAmount: cleanAmount,
+        customerNote: proofNote.trim() || null
+      });
+      setProofSubmitted(true);
+    } catch (err) {
+      setProofError(err.response?.data?.message || 'Failed to submit payment proof. You can also send receipt to WhatsApp.');
+    } finally {
+      setProofSubmitting(false);
     }
   };
 
@@ -296,18 +347,171 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
               </div>
             </div>
 
-            <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 14, padding: 14, textAlign: 'left', maxWidth: 520, margin: '0 auto 24px' }}>
+            {/* Kabir's Kitchen Official Advance Accounts */}
+            <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 14, padding: 14, textAlign: 'left', maxWidth: 520, margin: '0 auto 16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#b45309', fontWeight: 800, fontSize: '0.88rem', marginBottom: 4 }}>
                 <Info size={16} /> Complete 50% Advance to Begin Baking
               </div>
-              <p style={{ fontSize: '0.82rem', color: '#92400e', lineHeight: 1.5, margin: 0 }}>
-                Please pay <strong>৳{bookingSuccess.advanceRequired || bookingSuccess.advanceRequiredAmount}</strong> via bKash / Nagad or at the counter with booking ref <strong>{bookingSuccess.customOrderNumber || bookingSuccess.customNumber}</strong>. You can also send the receipt directly to our WhatsApp helpline.
+              <p style={{ fontSize: '0.82rem', color: '#92400e', lineHeight: 1.5, margin: '0 0 8px' }}>
+                Please send <strong>৳{bookingSuccess.advanceRequired || bookingSuccess.advanceRequiredAmount}</strong> (min 50%) using any method below with booking ref: <strong>{bookingSuccess.customOrderNumber || bookingSuccess.customNumber}</strong>
               </p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8, fontSize: '0.75rem' }}>
+                <div style={{ background: '#ffffff', padding: '6px 10px', borderRadius: 8, border: '1px solid #fde68a' }}>
+                  <strong style={{ color: '#d946ef' }}>bKash (বিকাশ):</strong>
+                  <div style={{ fontWeight: 800, color: '#0f172a' }}>01791665634</div>
+                </div>
+                <div style={{ background: '#ffffff', padding: '6px 10px', borderRadius: 8, border: '1px solid #fde68a' }}>
+                  <strong style={{ color: '#f97316' }}>Nagad (নগদ):</strong>
+                  <div style={{ fontWeight: 800, color: '#0f172a' }}>01791665634</div>
+                </div>
+                <div style={{ background: '#ffffff', padding: '6px 10px', borderRadius: 8, border: '1px solid #fde68a' }}>
+                  <strong style={{ color: '#8b5cf6' }}>Rocket (রকেট):</strong>
+                  <div style={{ fontWeight: 800, color: '#0f172a' }}>01791665634</div>
+                </div>
+                <div style={{ background: '#ffffff', padding: '6px 10px', borderRadius: 8, border: '1px solid #fde68a' }}>
+                  <strong style={{ color: '#10b981' }}>Kitchen Counter:</strong>
+                  <div style={{ fontWeight: 800, color: '#0f172a' }}>Cash / POS Card</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Interactive Payment Proof Form */}
+            <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 14, padding: 18, textAlign: 'left', maxWidth: 520, margin: '0 auto 20px', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#0f172a', fontWeight: 900, fontSize: '0.92rem', marginBottom: 4 }}>
+                <CreditCard size={18} color="#7e22ce" /> Submit Advance Payment Proof
+              </div>
+              <p style={{ fontSize: '0.78rem', color: '#64748b', margin: '0 0 12px', lineHeight: 1.4 }}>
+                After sending money, enter your transaction reference below. Admin will verify it to unlock baking.
+              </p>
+
+              {proofSubmitted ? (
+                <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: 10, padding: 14, textAlign: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#059669', fontWeight: 800, fontSize: '0.92rem', marginBottom: 4 }}>
+                    <CheckCircle2 size={18} /> Payment Proof Submitted!
+                  </div>
+                  <p style={{ fontSize: '0.8rem', color: '#047857', margin: '0 0 8px' }}>
+                    Status: <strong>Awaiting Admin Verification</strong>
+                  </p>
+                  <div style={{ fontSize: '0.75rem', color: '#065f46', fontFamily: 'monospace', background: '#d1fae5', padding: '6px 10px', borderRadius: 6, display: 'inline-block' }}>
+                    [{proofMethod}] Trx: {proofTrx} • Claimed: ৳{proofAmount}
+                  </div>
+                  <p style={{ fontSize: '0.72rem', color: '#047857', margin: '8px 0 0' }}>
+                    Staff will verify your transaction shortly to approve baking.
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleProofSubmit}>
+                  {/* Method selection pills */}
+                  <div style={{ marginBottom: 12 }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: '#334155', marginBottom: 6 }}>
+                      Payment Channel:
+                    </label>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {[
+                        { id: 'bKash', label: 'bKash (বিকাশ)', color: '#d946ef' },
+                        { id: 'Nagad', label: 'Nagad (নগদ)', color: '#f97316' },
+                        { id: 'Rocket', label: 'Rocket (রকেট)', color: '#8b5cf6' },
+                        { id: 'Cash Counter', label: 'Cash at Counter', color: '#10b981' },
+                        { id: 'Card POS', label: 'Card / POS', color: '#3b82f6' }
+                      ].map(m => (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => setProofMethod(m.id)}
+                          style={{
+                            padding: '5px 10px',
+                            borderRadius: 6,
+                            fontSize: '0.72rem',
+                            fontWeight: proofMethod === m.id ? 800 : 600,
+                            border: proofMethod === m.id ? `2px solid ${m.color}` : '1px solid #e2e8f0',
+                            background: proofMethod === m.id ? '#faf5ff' : '#ffffff',
+                            color: proofMethod === m.id ? m.color : '#64748b',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {m.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: 4 }}>
+                        Sender Number / Slip #
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 017... or Last 4"
+                        value={proofSender}
+                        onChange={(e) => setProofSender(e.target.value)}
+                        style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: '0.82rem', boxSizing: 'border-box' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: 4 }}>
+                        Amount Paid (৳) *
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        step="0.5"
+                        value={proofAmount}
+                        onChange={(e) => setProofAmount(e.target.value)}
+                        required
+                        style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: '0.82rem', fontWeight: 800, color: '#7e22ce', boxSizing: 'border-box' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: 12 }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: 4 }}>
+                      Transaction ID (TrxID) / Receipt Details *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 9X738B4291 or Counter Cash"
+                      value={proofTrx}
+                      onChange={(e) => setProofTrx(e.target.value)}
+                      required
+                      style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: '0.82rem', boxSizing: 'border-box' }}
+                    />
+                  </div>
+
+                  {proofError && (
+                    <p style={{ color: '#dc2626', fontSize: '0.78rem', margin: '0 0 10px', fontWeight: 700 }}>
+                      {proofError}
+                    </p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={proofSubmitting}
+                    style={{
+                      width: '100%',
+                      background: 'linear-gradient(135deg, #7e22ce 0%, #6b21a8 100%)',
+                      color: '#ffffff',
+                      border: 'none',
+                      padding: '10px',
+                      borderRadius: 8,
+                      fontSize: '0.84rem',
+                      fontWeight: 800,
+                      cursor: proofSubmitting ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 6
+                    }}
+                  >
+                    {proofSubmitting ? 'Submitting proof…' : 'Submit Advance Payment Proof'}
+                  </button>
+                </form>
+              )}
             </div>
 
             <div style={{ display: 'flex', gap: 12, maxWidth: 520, margin: '0 auto' }}>
               <a
-                href={`https://wa.me/8801791665634?text=${encodeURIComponent(`Hi Kabir's Kitchen! I booked custom cake #${bookingSuccess.customOrderNumber || bookingSuccess.customNumber} (${bookingSuccess.customerName}). Size: ${activeQuantity} ${weightUnit === 'pound' ? 'Pound' : 'KG'}. I want to complete my 50% advance payment of ৳${bookingSuccess.advanceRequired || bookingSuccess.advanceRequiredAmount}.`)}`}
+                href={`https://wa.me/8801791665634?text=${encodeURIComponent(`Hi Kabir's Kitchen! I booked custom cake #${bookingSuccess.customOrderNumber || bookingSuccess.customNumber} (${bookingSuccess.customerName}). Size: ${activeQuantity} ${weightUnit === 'pound' ? 'Pound' : 'KG'}. Payment: Paid ৳${proofAmount || bookingSuccess.advanceRequired || bookingSuccess.advanceRequiredAmount} via ${proofMethod}${proofTrx ? ` (TrxID: ${proofTrx})` : ''}. Please verify and confirm my order.`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
