@@ -27,7 +27,8 @@ export default function Navbar({ onOpenSearch, onOpenReservation }) {
     }
   };
 
-  const isStaff = authUser && (authUser.role === 'Admin' || authUser.role === 'Cashier' || authUser.role === 'BranchManager');
+  const isStaff = authUser && (authUser.role === 'Admin' || authUser.role === 'SuperAdmin' || authUser.role === 'Cashier' || authUser.role === 'BranchManager');
+  const isAdmin = authUser && (authUser.role === 'Admin' || authUser.role === 'SuperAdmin' || authUser.role === 'BranchManager');
 
   return (
     <header className="site-header">
@@ -41,7 +42,29 @@ export default function Navbar({ onOpenSearch, onOpenReservation }) {
         </div>
 
         {/* Right side: Staff Access (Only if authenticated staff) or Customer Account */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {isAdmin && (
+            <button
+              onClick={() => changeMode('admin')}
+              style={{
+                background: 'rgba(56, 189, 248, 0.15)',
+                border: '1px solid rgba(56, 189, 248, 0.4)',
+                color: '#38bdf8',
+                padding: '3px 10px',
+                borderRadius: '6px',
+                fontSize: '0.66rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}
+              title="Access Management ERP Dashboard"
+            >
+              <ShieldCheck size={12} /> Management ERP
+            </button>
+          )}
+
           {isStaff && (
             <button
               onClick={() => changeMode('pos')}
@@ -60,7 +83,7 @@ export default function Navbar({ onOpenSearch, onOpenReservation }) {
               }}
               title="Access Staff Billing POS"
             >
-              <ShieldCheck size={12} /> Staff POS ({authUser.role})
+              <Store size={12} /> Staff POS
             </button>
           )}
 
