@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Cake, Info } from 'lucide-react';
+import { X, Cake, Info, CheckCircle2, MessageSquare, AlertCircle } from 'lucide-react';
 import { useApp } from '../context/useApp';
 import { CAKE_DESIGNS } from '../data/cakeDesigns';
 import { bakeryApi } from '../services/api';
@@ -29,11 +29,24 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
   const [deliverySlot, setDeliverySlot] = useState('04:00 PM - 06:00 PM');
   const [selectedDesignId, setSelectedDesignId] = useState(initialDesign.id);
   const [activeDesignCategory, setActiveDesignCategory] = useState('All designs');
+  const [customerName, setCustomerName] = useState(userProfile?.name || '');
+  const [customerPhone, setCustomerPhone] = useState(userProfile?.phone || '');
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [bookingSuccess, setBookingSuccess] = useState(null);
   const [priceQuote, setPriceQuote] = useState(null);
   const [quoteError, setQuoteError] = useState('');
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      if (!customerName && userProfile?.name) setCustomerName(userProfile.name);
+      if (!customerPhone && userProfile?.phone) setCustomerPhone(userProfile.phone);
+      setBookingSuccess(null);
+      setSubmitError('');
+    }
+  }, [isOpen, userProfile]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -109,6 +122,12 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!priceQuote || quoteLoading || quoteError) return;
+    const trimmedName = customerName.trim();
+    const trimmedPhone = customerPhone.trim();
+    if (!trimmedName || !trimmedPhone) {
+      setSubmitError('Please enter your Name and Phone/WhatsApp number so we can confirm your custom order.');
+      return;
+    }
     setSubmitting(true);
     setSubmitError('');
     try {
@@ -117,16 +136,17 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
         weightKg,
         flavor,
         creamType,
+        tierCount: '1 Tier',
         designName: selectedDesign.name,
         colorTheme: selectedDesign.name,
         messageOnCake,
         deliveryDate: getDeliveryDate(deliveryDate),
         deliverySlot,
-        customerName: userProfile.name,
-        customerPhone: userProfile.phone
+        customerName: trimmedName,
+        customerPhone: trimmedPhone,
+        deliveryAddress: deliveryAddress.trim() || null
       });
-      onClose();
-      alert(`Custom cake request saved. Offer-adjusted price: ৳${order.estimatedPrice}. Pay 50% advance (৳${order.advanceRequired}) to confirm production.`);
+      setBookingSuccess(order);
     } catch (error) {
       setSubmitError(error.response?.data?.message || 'Could not save the cake request. Please try again.');
     } finally {
@@ -199,8 +219,94 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+        {/* Content */}
+        {bookingSuccess ? (
+          <div style={{ padding: '36px 24px', textAlign: 'center' }}>
+            <div style={{ width: 68, height: 68, background: '#ecfdf5', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: '#059669' }}>
+              <CheckCircle2 size={40} />
+            </div>
+            <h3 style={{ fontSize: '1.45rem', fontWeight: 900, color: '#0f172a', margin: '0 0 6px' }}>
+              Custom Cake Booking Confirmed!
+            </h3>
+            <p style={{ color: '#64748b', fontSize: '0.9rem', margin: '0 0 20px' }}>
+              Your custom cake request has been registered in Kabir&apos;s Kitchen system.
+            </p>
+
+            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: 18, textAlign: 'left', maxWidth: 520, margin: '0 auto 20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 10, borderBottom: '1px solid #e2e8f0', marginBottom: 10, fontSize: '0.9rem' }}>
+                <span style={{ color: '#64748b' }}>Booking Reference:</span>
+                <strong style={{ color: '#7e22ce', fontFamily: 'monospace', fontSize: '1rem' }}>{bookingSuccess.customOrderNumber || bookingSuccess.customNumber}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 10, borderBottom: '1px solid #e2e8f0', marginBottom: 10, fontSize: '0.88rem' }}>
+                <span style={{ color: '#64748b' }}>Customer:</span>
+                <strong style={{ color: '#0f172a' }}>{bookingSuccess.customerName} ({bookingSuccess.customerPhone})</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 10, borderBottom: '1px solid #e2e8f0', marginBottom: 10, fontSize: '0.88rem' }}>
+                <span style={{ color: '#64748b' }}>Design & Weight:</span>
+                <strong style={{ color: '#0f172a' }}>{product?.name || 'Custom Cake'} • {bookingSuccess.weightKg || weightKg} kg</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 10, borderBottom: '1px solid #e2e8f0', marginBottom: 10, fontSize: '0.88rem' }}>
+                <span style={{ color: '#64748b' }}>Total Estimated Price:</span>
+                <strong style={{ color: '#0f172a' }}>৳{bookingSuccess.estimatedPrice}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.05rem', color: '#b45309', fontWeight: 900 }}>
+                <span>50% Advance Payable:</span>
+                <span>৳{bookingSuccess.advanceRequired || bookingSuccess.advanceRequiredAmount}</span>
+              </div>
+            </div>
+
+            <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 14, padding: 14, textAlign: 'left', maxWidth: 520, margin: '0 auto 24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#b45309', fontWeight: 800, fontSize: '0.88rem', marginBottom: 4 }}>
+                <Info size={16} /> Complete 50% Advance to Begin Baking
+              </div>
+              <p style={{ fontSize: '0.82rem', color: '#92400e', lineHeight: 1.5, margin: 0 }}>
+                Please pay <strong>৳{bookingSuccess.advanceRequired || bookingSuccess.advanceRequiredAmount}</strong> via bKash / Nagad or at the counter with booking ref <strong>{bookingSuccess.customOrderNumber || bookingSuccess.customNumber}</strong>. You can also send the receipt directly to our WhatsApp helpline.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: 12, maxWidth: 520, margin: '0 auto' }}>
+              <a
+                href={`https://wa.me/8801791665634?text=${encodeURIComponent(`Hi Kabir's Kitchen! I booked custom cake #${bookingSuccess.customOrderNumber || bookingSuccess.customNumber} (${bookingSuccess.customerName}). I want to complete my 50% advance payment of ৳${bookingSuccess.advanceRequired || bookingSuccess.advanceRequiredAmount}.`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  background: '#25D366',
+                  color: '#ffffff',
+                  fontWeight: 800,
+                  padding: '12px',
+                  borderRadius: 10,
+                  textDecoration: 'none',
+                  fontSize: '0.9rem'
+                }}
+              >
+                <MessageSquare size={16} /> Confirm via WhatsApp
+              </a>
+              <button
+                type="button"
+                onClick={onClose}
+                style={{
+                  flex: 1,
+                  background: '#0f172a',
+                  color: '#ffffff',
+                  fontWeight: 800,
+                  padding: '12px',
+                  borderRadius: 10,
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem'
+                }}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
           <section aria-labelledby="cake-design-heading">
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
               <div>
@@ -402,6 +508,53 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
             </div>
           </div>
 
+          {/* Customer Contact & Booking Information */}
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 14 }}>
+            <h4 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0f172a', margin: '0 0 10px' }}>
+              Customer Contact Details
+            </h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 10 }}>
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: 6 }}>
+                  Your Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Kabir Hossain"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: 6 }}>
+                  Phone / WhatsApp *
+                </label>
+                <input
+                  type="tel"
+                  required
+                  placeholder="e.g. 01791665634"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                />
+              </div>
+            </div>
+            <div>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: 6 }}>
+                Delivery Address or Special Notes (Optional)
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Pickup at Dhanmondi Branch, or House 12, Road 4..."
+                value={deliveryAddress}
+                onChange={(e) => setDeliveryAddress(e.target.value)}
+                style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+              />
+            </div>
+          </div>
+
           {/* Kabir's Kitchen 50% Advance Payment Policy Notice */}
           <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 12, padding: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#b45309', fontWeight: 800, fontSize: '0.85rem', marginBottom: 4 }}>
@@ -415,7 +568,11 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
           {/* Summary Box */}
           <div style={{ background: '#f8fafc', padding: 16, borderRadius: 10, border: '1px solid #e2e8f0' }}>
             {quoteError && <p role="alert" style={{ color: '#be123c', margin: '0 0 10px' }}>{quoteError}</p>}
-            {submitError && <p role="alert" style={{ color: '#be123c', margin: '0 0 10px' }}>{submitError}</p>}
+            {submitError && (
+              <div role="alert" style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fef2f2', border: '1px solid #fecaca', padding: '10px 12px', borderRadius: 8, color: '#be123c', fontSize: '0.85rem', fontWeight: 700, margin: '0 0 10px' }}>
+                <AlertCircle size={16} /> {submitError}
+              </div>
+            )}
             <p role="status" style={{ color: '#64748b', margin: '0 0 10px', fontSize: 12 }}>
               {quoteLoading ? 'Checking current cake price and offers…' :
                 priceQuote?.campaignName ? `Offer applied: ${priceQuote.campaignName}` :
@@ -457,6 +614,7 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
             {submitting ? 'Saving cake request…' : 'Submit Custom Cake Booking'}
           </button>
         </form>
+        )}
       </div>
     </div>
   );

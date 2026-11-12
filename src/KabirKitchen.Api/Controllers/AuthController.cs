@@ -58,7 +58,8 @@ public class AuthController : ControllerBase
             branchName,
             token,
             refreshToken,
-            assignedBranchIds
+            assignedBranchIds,
+            user.PhoneNumber
         ));
     }
 
@@ -139,6 +140,7 @@ public class AuthController : ControllerBase
             id = user.Id,
             fullName = user.FullName,
             email = user.Email,
+            phoneNumber = user.PhoneNumber,
             role = user.Roles.FirstOrDefault()?.Role?.Name ?? "Customer",
             branchId = primaryBranch?.BranchId,
             branchName = primaryBranch?.Branch?.Name,

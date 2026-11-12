@@ -111,7 +111,8 @@ export const mapLoginResponse = (data) => ({
     role: data.role,
     branchId: data.currentBranchId,
     branchName: data.currentBranchName,
-    assignedBranchIds: data.assignedBranchIds || []
+    assignedBranchIds: data.assignedBranchIds || [],
+    phoneNumber: data.phoneNumber || ''
   }
 });
 

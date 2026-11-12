@@ -11,7 +11,8 @@ public record LoginResponseDto(
     string? CurrentBranchName,
     string AccessToken,
     string RefreshToken,
-    List<long> AssignedBranchIds
+    List<long> AssignedBranchIds,
+    string? PhoneNumber = null
 );
 
 public record RegisterUserDto(
