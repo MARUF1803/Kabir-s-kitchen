@@ -21,9 +21,10 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
   const { createCustomCakeRequest, activeBranch, userProfile } = useApp();
   const initialDesign = CAKE_DESIGNS.find(design => design.id === product?.cakeDesignId) ?? CAKE_DESIGNS[0];
 
-  const [weightKg, setWeightKg] = useState(1.5);
-  const [weightUnit, setWeightUnit] = useState('kg'); // 'kg' or 'pound'
-  const [customWeight, setCustomWeight] = useState(''); // for large orders
+  const [weightUnit, setWeightUnit] = useState('pound'); // 'pound' or 'kg'
+  const [selectedPound, setSelectedPound] = useState(1);
+  const [selectedKg, setSelectedKg] = useState(1.5);
+  const [customWeight, setCustomWeight] = useState(''); // for custom / large orders
   const [flavor, setFlavor] = useState(initialDesign.flavor);
   const [creamType, setCreamType] = useState(initialDesign.frosting);
   const [messageOnCake, setMessageOnCake] = useState('Happy Birthday Kabir!');
@@ -71,16 +72,23 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, onClose]);
-  // Compute actual weightKg from custom input or selected button, with unit conversion
-  const POUND_TO_KG = 0.453592;
+  // Rates determination: standard cakes = 800/pound (1750/kg), gourmet = 850/pound (1880/kg), wedding = 1050/pound (2300/kg)
+  const baseRate = Number(product?.basePrice) || 1750;
+  const pricePerPound = baseRate >= 2100 ? 1050 : baseRate >= 1800 ? 850 : 800;
+  const pricePerKg = baseRate;
+
+  // Active quantity selected by user (either typed in custom box or selected from presets)
+  const parsedCustom = parseFloat(customWeight);
+  const isCustomActive = customWeight !== '' && !isNaN(parsedCustom) && parsedCustom > 0;
+  const activeQuantity = isCustomActive ? parsedCustom : (weightUnit === 'pound' ? selectedPound : selectedKg);
+
+  // Effective weightKg to send to backend so that backend calculation matches exact taka
   const effectiveWeightKg = (() => {
-    if (customWeight !== '') {
-      const raw = parseFloat(customWeight);
-      if (!isNaN(raw) && raw > 0) {
-        return weightUnit === 'pound' ? parseFloat((raw * POUND_TO_KG).toFixed(3)) : raw;
-      }
+    if (weightUnit === 'pound') {
+      const targetSubTotal = activeQuantity * pricePerPound;
+      return parseFloat((targetSubTotal / baseRate).toFixed(6));
     }
-    return weightUnit === 'pound' ? parseFloat((weightKg * POUND_TO_KG).toFixed(3)) : weightKg;
+    return activeQuantity;
   })();
 
   useEffect(() => {
@@ -258,8 +266,7 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 10, borderBottom: '1px solid #e2e8f0', marginBottom: 10, fontSize: '0.88rem' }}>
                 <span style={{ color: '#64748b' }}>Design & Weight:</span>
                 <strong style={{ color: '#0f172a' }}>
-                  {product?.name || 'Custom Cake'} • {bookingSuccess.weightKg || effectiveWeightKg} kg
-                  {weightUnit === 'pound' ? ` (${customWeight || (weightKg / POUND_TO_KG).toFixed(1)} lbs)` : ''}
+                  {product?.name || 'Custom Cake'} • {activeQuantity} {weightUnit === 'pound' ? 'Pound' : 'KG'}
                 </strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 10, borderBottom: '1px solid #e2e8f0', marginBottom: 10, fontSize: '0.88rem' }}>
@@ -283,7 +290,7 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
 
             <div style={{ display: 'flex', gap: 12, maxWidth: 520, margin: '0 auto' }}>
               <a
-                href={`https://wa.me/8801791665634?text=${encodeURIComponent(`Hi Kabir's Kitchen! I booked custom cake #${bookingSuccess.customOrderNumber || bookingSuccess.customNumber} (${bookingSuccess.customerName}). I want to complete my 50% advance payment of ৳${bookingSuccess.advanceRequired || bookingSuccess.advanceRequiredAmount}.`)}`}
+                href={`https://wa.me/8801791665634?text=${encodeURIComponent(`Hi Kabir's Kitchen! I booked custom cake #${bookingSuccess.customOrderNumber || bookingSuccess.customNumber} (${bookingSuccess.customerName}). Size: ${activeQuantity} ${weightUnit === 'pound' ? 'Pound' : 'KG'}. I want to complete my 50% advance payment of ৳${bookingSuccess.advanceRequired || bookingSuccess.advanceRequiredAmount}.`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -410,71 +417,64 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
               <label style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
                 Cake Weight / Size
               </label>
-              {/* Unit Toggle: KG vs Pound */}
+              {/* Unit Toggle: Pound vs KG */}
               <div style={{ display: 'inline-flex', background: '#e2e8f0', borderRadius: 8, padding: 2 }}>
                 <button
                   type="button"
                   onClick={() => {
-                    setWeightUnit('kg');
-                    if (customWeight) {
-                      // convert pound to kg if user typed something
-                      const num = parseFloat(customWeight);
-                      if (!isNaN(num)) setCustomWeight((num * POUND_TO_KG).toFixed(1));
-                    }
+                    setWeightUnit('pound');
+                    setCustomWeight('');
                   }}
                   style={{
-                    padding: '4px 10px',
+                    padding: '5px 12px',
+                    borderRadius: 6,
+                    border: 'none',
+                    background: weightUnit === 'pound' ? '#8b5cf6' : 'transparent',
+                    color: weightUnit === 'pound' ? '#ffffff' : '#475569',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Pound
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setWeightUnit('kg');
+                    setCustomWeight('');
+                  }}
+                  style={{
+                    padding: '5px 12px',
                     borderRadius: 6,
                     border: 'none',
                     background: weightUnit === 'kg' ? '#8b5cf6' : 'transparent',
                     color: weightUnit === 'kg' ? '#ffffff' : '#475569',
-                    fontSize: '0.75rem',
+                    fontSize: '0.78rem',
                     fontWeight: 800,
                     cursor: 'pointer'
                   }}
                 >
                   KG
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setWeightUnit('pound');
-                    if (customWeight) {
-                      // convert kg to pound
-                      const num = parseFloat(customWeight);
-                      if (!isNaN(num)) setCustomWeight((num / POUND_TO_KG).toFixed(1));
-                    }
-                  }}
-                  style={{
-                    padding: '4px 10px',
-                    borderRadius: 6,
-                    border: 'none',
-                    background: weightUnit === 'pound' ? '#8b5cf6' : 'transparent',
-                    color: weightUnit === 'pound' ? '#ffffff' : '#475569',
-                    fontSize: '0.75rem',
-                    fontWeight: 800,
-                    cursor: 'pointer'
-                  }}
-                >
-                  Pound (lb)
-                </button>
               </div>
             </div>
 
             {/* Quick Preset Buttons */}
-            <div style={{ display: 'grid', gridTemplateColumns: weightUnit === 'kg' ? 'repeat(5, 1fr)' : 'repeat(6, 1fr)', gap: 6, marginBottom: 10 }}>
-              {(weightUnit === 'kg'
-                ? [1.0, 1.5, 2.0, 3.0, 5.0]
-                : [1, 2, 3, 5, 10, 20]
+            <div style={{ display: 'grid', gridTemplateColumns: weightUnit === 'pound' ? 'repeat(6, 1fr)' : 'repeat(5, 1fr)', gap: 6, marginBottom: 10 }}>
+              {(weightUnit === 'pound'
+                ? [1, 2, 3, 5, 10, 20]
+                : [1.0, 1.5, 2.0, 3.0, 5.0]
               ).map(val => {
-                const isSelected = !customWeight && (weightUnit === 'kg' ? weightKg === val : Math.abs(weightKg - val * POUND_TO_KG) < 0.1);
+                const isSelected = !customWeight && (weightUnit === 'pound' ? selectedPound === val : selectedKg === val);
                 return (
                   <button
                     key={val}
                     type="button"
                     onClick={() => {
                       setCustomWeight('');
-                      setWeightKg(weightUnit === 'kg' ? val : parseFloat((val * POUND_TO_KG).toFixed(2)));
+                      if (weightUnit === 'pound') setSelectedPound(val);
+                      else setSelectedKg(val);
                     }}
                     style={{
                       padding: '10px 4px',
@@ -488,7 +488,7 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
                       textAlign: 'center'
                     }}
                   >
-                    {val} {weightUnit === 'kg' ? 'kg' : 'lb'}
+                    {val} {weightUnit === 'pound' ? 'Pound' : 'KG'}
                   </button>
                 );
               })}
@@ -498,7 +498,7 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap' }}>
-                  Custom / Large Order:
+                  Custom {weightUnit === 'pound' ? 'Pound' : 'KG'}:
                 </span>
                 <div style={{ position: 'relative', flex: 1 }}>
                   <input
@@ -506,12 +506,12 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
                     min="0.5"
                     max={weightUnit === 'pound' ? '220' : '100'}
                     step="0.5"
-                    placeholder={`e.g. 5, 10, 15, 20, 50, 100 ${weightUnit}`}
+                    placeholder={weightUnit === 'pound' ? 'e.g. 1, 2, 5, 10, 20, 50, 100 Pound' : 'e.g. 1, 1.5, 2, 5, 10, 25 KG'}
                     value={customWeight}
                     onChange={(e) => setCustomWeight(e.target.value)}
                     style={{
                       width: '100%',
-                      padding: '8px 45px 8px 12px',
+                      padding: '8px 55px 8px 12px',
                       borderRadius: 8,
                       border: customWeight ? '2px solid #8b5cf6' : '1px solid #cbd5e1',
                       fontSize: '0.85rem',
@@ -531,17 +531,17 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
                     color: '#8b5cf6',
                     pointerEvents: 'none'
                   }}>
-                    {weightUnit}
+                    {weightUnit === 'pound' ? 'Pound' : 'KG'}
                   </span>
                 </div>
               </div>
-              <p style={{ margin: '6px 0 0', fontSize: '0.74rem', color: '#64748b', display: 'flex', justifyContent: 'space-between' }}>
-                <span>
-                  {customWeight
-                    ? `Selected: ${customWeight} ${weightUnit} (≈ ${effectiveWeightKg} kg)`
-                    : `Active: ${effectiveWeightKg} kg ${weightUnit === 'pound' ? `(≈ ${(effectiveWeightKg / POUND_TO_KG).toFixed(1)} lb)` : ''}`}
+              <p style={{ margin: '6px 0 0', fontSize: '0.75rem', color: '#64748b', display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#0f172a', fontWeight: 700 }}>
+                  Selected: {activeQuantity} {weightUnit === 'pound' ? 'Pound' : 'KG'}
                 </span>
-                <span style={{ color: '#059669', fontWeight: 600 }}>Supports up to 100 kg / 220 lb</span>
+                <span style={{ color: '#7e22ce', fontWeight: 700 }}>
+                  Rate: ৳{weightUnit === 'pound' ? pricePerPound : pricePerKg} / {weightUnit === 'pound' ? 'Pound' : 'KG'}
+                </span>
               </p>
             </div>
           </div>
@@ -718,7 +718,7 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
             </div>}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
               <span>
-                Final price ({customWeight ? `${customWeight} ${weightUnit}` : (weightUnit === 'pound' ? `${(effectiveWeightKg / POUND_TO_KG).toFixed(1)} lb` : `${effectiveWeightKg} kg`)}):
+                Final price ({activeQuantity} {weightUnit === 'pound' ? 'Pound' : 'KG'}):
               </span>
               <strong>৳{estimatedPrice ?? '—'}</strong>
             </div>
