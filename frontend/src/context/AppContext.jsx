@@ -646,7 +646,7 @@ export function AppProvider({ children }) {
   const startCakeBaking = (cakeId) => {
     const target = customCakes.find(c => c.id === cakeId);
     if (!target?.isAdvanceVerified) {
-      alert('❌ BACKEND ENFORCED RULE: Cannot start baking! 50% advance payment is not verified.');
+      alert("❌ Kabir's Kitchen Policy: Cannot start baking! 50% advance payment is not verified.");
       return false;
     }
     setCustomCakes(prev => prev.map(c => c.id === cakeId ? { ...c, status: 'InBaking' } : c));

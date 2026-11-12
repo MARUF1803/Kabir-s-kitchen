@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Cake, AlertTriangle } from 'lucide-react';
+import { X, Cake, Info } from 'lucide-react';
 import { useApp } from '../context/useApp';
 import { CAKE_DESIGNS } from '../data/cakeDesigns';
 import { bakeryApi } from '../services/api';
@@ -402,13 +402,13 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
             </div>
           </div>
 
-          {/* Strict 50% Advance Payment Rule Notice */}
-          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 12, padding: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#b91c1c', fontWeight: 800, fontSize: '0.85rem', marginBottom: 4 }}>
-              <AlertTriangle size={16} /> Backend Business Rule Notice
+          {/* Kabir's Kitchen 50% Advance Payment Policy Notice */}
+          <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 12, padding: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#b45309', fontWeight: 800, fontSize: '0.85rem', marginBottom: 4 }}>
+              <Info size={16} /> Kabir&apos;s Kitchen Custom Cake Policy
             </div>
-            <p style={{ fontSize: '0.78rem', color: '#991b1b', lineHeight: 1.45, margin: 0 }}>
-              Bakery production requires an advance equal to <strong>50% of the final price after eligible offers (৳{advanceRequired ?? '—'})</strong>. The server recalculates both the offer and advance when you submit.
+            <p style={{ fontSize: '0.8rem', color: '#92400e', lineHeight: 1.5, margin: 0 }}>
+              Handcrafted custom cakes require a <strong>50% advance payment (৳{advanceRequired ?? '—'})</strong> to confirm the order and begin bakery preparation. The remaining 50% balance is payable upon delivery or pickup.
             </p>
           </div>
 
@@ -419,7 +419,7 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
             <p role="status" style={{ color: '#64748b', margin: '0 0 10px', fontSize: 12 }}>
               {quoteLoading ? 'Checking current cake price and offers…' :
                 priceQuote?.campaignName ? `Offer applied: ${priceQuote.campaignName}` :
-                  quoteError ? '' : 'Price and eligible offers checked by the server.'}
+                  quoteError ? '' : 'Prices calculated with active offers and advance policy.'}
             </p>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
               <span>Price before offer:</span>
