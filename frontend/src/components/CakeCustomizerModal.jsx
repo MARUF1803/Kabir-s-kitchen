@@ -462,10 +462,10 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
             </div>
 
             {/* Quick Preset Buttons */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, marginBottom: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: weightUnit === 'kg' ? 'repeat(5, 1fr)' : 'repeat(6, 1fr)', gap: 6, marginBottom: 10 }}>
               {(weightUnit === 'kg'
                 ? [1.0, 1.5, 2.0, 3.0, 5.0]
-                : [2, 3, 5, 10, 20]
+                : [1, 2, 3, 5, 10, 20]
               ).map(val => {
                 const isSelected = !customWeight && (weightUnit === 'kg' ? weightKg === val : Math.abs(weightKg - val * POUND_TO_KG) < 0.1);
                 return (
