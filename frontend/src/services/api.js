@@ -175,42 +175,45 @@ export const bakeryApi = {
   startBaking: (cakeOrderId) => apiClient.put(`/bakery/${cakeOrderId}/start-baking`).then(r => r.data),
 };
 
-export const mapMenuItemToProduct = item => ({
-  id: item.id,
-  dbCategoryId: item.rootCategoryId ?? item.categoryId,
-  productCategoryId: item.categoryId,
-  categoryId: item.rootCategorySlug || item.categorySlug || String(item.categoryId),
-  categoryName: item.categoryName,
-  subCategoryId: item.subCategoryId || '',
-  subCategoryName: item.subCategoryName || '',
-  categoryPath: item.categoryPath || item.categoryName || '',
-  name: item.name,
-  slug: item.slug,
-  description: item.description || '',
-  image: item.imageUrl ? resolveApiUrl(item.imageUrl) : '/food-placeholder.svg',
-  imageUrl: item.imageUrl ? resolveApiUrl(item.imageUrl) : '/food-placeholder.svg',
-  basePrice: item.branchPrice ?? item.basePrice,
-  branchPrices: {},
-  prepTime: item.preparationTimeMinutes,
-  preparationTimeMinutes: item.preparationTimeMinutes,
-  rating: item.rating ?? 0,
-  reviews: item.reviews ?? 0,
-  isPopular: item.isPopular ?? false,
-  isSpicy: item.isSpicy,
-  isVeg: item.isVegetarian,
-  isCustomCake: item.isCustomCake,
-  isAvailable: item.isAvailable,
-  variants: (item.variants || []).map(variant => ({
-    id: variant.id,
-    name: variant.variantName,
-    priceDiff: variant.additionalPrice,
-  })),
-  addons: (item.addOns || []).map(addOn => ({
-    id: addOn.id,
-    name: addOn.name,
-    price: addOn.price,
-  })),
-});
+export const mapMenuItemToProduct = item => {
+  const cleanName = item.name ? item.name.replace(/\s*\(\s*\d+(\.\d+)?\s*(kg|Kg|KG|pound|lb|gm)\s*\)/gi, '').trim() : '';
+  return {
+    id: item.id,
+    dbCategoryId: item.rootCategoryId ?? item.categoryId,
+    productCategoryId: item.categoryId,
+    categoryId: item.rootCategorySlug || item.categorySlug || String(item.categoryId),
+    categoryName: item.categoryName,
+    subCategoryId: item.subCategoryId || '',
+    subCategoryName: item.subCategoryName || '',
+    categoryPath: item.categoryPath || item.categoryName || '',
+    name: cleanName || item.name,
+    slug: item.slug,
+    description: item.description || '',
+    image: item.imageUrl ? resolveApiUrl(item.imageUrl) : '/food-placeholder.svg',
+    imageUrl: item.imageUrl ? resolveApiUrl(item.imageUrl) : '/food-placeholder.svg',
+    basePrice: item.branchPrice ?? item.basePrice,
+    branchPrices: {},
+    prepTime: item.preparationTimeMinutes,
+    preparationTimeMinutes: item.preparationTimeMinutes,
+    rating: item.rating ?? 0,
+    reviews: item.reviews ?? 0,
+    isPopular: item.isPopular ?? false,
+    isSpicy: item.isSpicy,
+    isVeg: item.isVegetarian,
+    isCustomCake: item.isCustomCake,
+    isAvailable: item.isAvailable,
+    variants: (item.variants || []).map(variant => ({
+      id: variant.id,
+      name: variant.variantName,
+      priceDiff: variant.additionalPrice,
+    })),
+    addons: (item.addOns || []).map(addOn => ({
+      id: addOn.id,
+      name: addOn.name,
+      price: addOn.price,
+    })),
+  };
+};
 
 // ─── Inventory API ───────────────────────────────────────────
 export const inventoryApi = {

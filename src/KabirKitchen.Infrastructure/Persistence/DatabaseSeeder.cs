@@ -139,8 +139,8 @@ public static class DatabaseSeeder
         var cake = new MenuItem
         {
             CategoryId = catBakery.Id,
-            Name = "Chocolate Fudge Cake (1kg)",
-            Slug = "chocolate-fudge-cake-1kg",
+            Name = "Chocolate Fudge Cake",
+            Slug = "chocolate-fudge-cake",
             Description = "Rich, moist layered chocolate cake covered in glossy chocolate ganache",
             BasePrice = 750m,
             PreparationTimeMinutes = 60,
