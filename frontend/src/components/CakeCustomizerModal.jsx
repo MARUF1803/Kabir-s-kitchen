@@ -89,24 +89,33 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, onClose]);
-  // Rates determination: standard cakes = 800/pound (1750/kg), gourmet = 850/pound (1880/kg), wedding = 1050/pound (2300/kg)
+  // Rates determination based on realistic BD bakery market rates:
+  // 1 KG = 2.20462 Pounds.
+  // Standard: 800 tk / pound (1,750 tk / kg)
+  // Gourmet:  850 tk / pound (1,880 tk / kg)
+  // Wedding/Tiered: 1,050 tk / pound (2,300 tk / kg)
   const baseRate = Number(product?.basePrice) || 1750;
-  const pricePerPound = baseRate >= 2100 ? 1050 : baseRate >= 1800 ? 850 : 800;
-  const pricePerKg = baseRate;
+  const isTiered = baseRate >= 2100 || (product?.name && /tier|wedding|pearl|gold leaf/i.test(product.name));
+  const isGourmet = !isTiered && (baseRate >= 1800 || (product?.name && /truffle|fudge|velvet|rosette|berry|ganache|confetti/i.test(product.name)));
+
+  const pricePerPound = isTiered ? 1050 : (isGourmet ? 850 : 800);
+  const pricePerKg = isTiered ? 2300 : (isGourmet ? 1880 : 1750);
+  const backendBaseRate = baseRate > 0 ? baseRate : pricePerKg;
 
   // Active quantity selected by user (either typed in custom box or selected from presets)
   const parsedCustom = parseFloat(customWeight);
   const isCustomActive = customWeight !== '' && !isNaN(parsedCustom) && parsedCustom > 0;
   const activeQuantity = isCustomActive ? parsedCustom : (weightUnit === 'pound' ? selectedPound : selectedKg);
 
-  // Effective weightKg to send to backend so that backend calculation matches exact taka
-  const effectiveWeightKg = (() => {
-    if (weightUnit === 'pound') {
-      const targetSubTotal = activeQuantity * pricePerPound;
-      return parseFloat((targetSubTotal / baseRate).toFixed(6));
-    }
-    return activeQuantity;
-  })();
+  // Exact linear pricing in Taka:
+  // Pound: 1 lb = ৳800, 2 lb = ৳1,600, 3 lb = ৳2,400
+  // KG: 1 kg (2.2 lb) = ৳1,750, 1.5 kg = ৳2,625, 2 kg = ৳3,500
+  const targetSubTotal = weightUnit === 'pound'
+    ? activeQuantity * pricePerPound
+    : activeQuantity * pricePerKg;
+
+  // Effective weightKg to send to backend so that backend `backendBaseRate * weightKg` yields EXACT targetSubTotal:
+  const effectiveWeightKg = parseFloat((targetSubTotal / backendBaseRate).toFixed(6));
 
   useEffect(() => {
     if (!isOpen || !product?.id) {
