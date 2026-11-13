@@ -80,7 +80,7 @@ function AppContent() {
 
       <ProductModal product={selectedProduct} onClose={closeProductModal} />
       <CakeCustomizerModal
-        key={cakeProduct?.cakeDesignId || 'custom-cake-customizer'}
+        key={cakeProduct?.id ? `cake-customizer-${cakeProduct.id}` : 'custom-cake-customizer'}
         isOpen={Boolean(cakeProduct)}
         onClose={closeCakeModal}
         product={cakeProduct}

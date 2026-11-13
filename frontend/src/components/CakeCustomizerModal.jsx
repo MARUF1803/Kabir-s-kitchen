@@ -1,37 +1,48 @@
-import React, { useState, useEffect } from 'react';
-import { X, Cake, Info, CheckCircle2, MessageSquare, AlertCircle, Tag, CreditCard } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { X, Cake, Info, CheckCircle2, MessageSquare, AlertCircle, Tag, CreditCard, ChevronDown, ChevronUp, Sparkles, Search } from 'lucide-react';
 import { useApp } from '../context/useApp';
 import { CAKE_DESIGNS } from '../data/cakeDesigns';
-import { bakeryApi } from '../services/api';
+import { bakeryApi, productsApi } from '../services/api';
 
-const DESIGN_CATEGORIES = ['All designs', ...new Set(CAKE_DESIGNS.map(design => design.category))];
+const detectInitialFlavor = (name) => {
+  if (!name) return 'Dutch Truffle Chocolate Fudge';
+  if (/red velvet/i.test(name)) return 'Velvet Royale Strawberry Cream';
+  if (/vanilla|white chocolate/i.test(name)) return 'Vanilla Bean White Chocolate';
+  if (/black forest|cherry/i.test(name)) return 'Black Forest Cherry Royale';
+  if (/cheesecake/i.test(name)) return 'Velvet Royale Strawberry Cream';
+  if (/caramel|biscoff/i.test(name)) return 'Lotus Biscoff Caramel Crunch';
+  if (/mango|passion/i.test(name)) return 'Mango Passionfruit Cream';
+  if (/coffee|mocha/i.test(name)) return 'Coffee Mocha Hazelnut';
+  return 'Dutch Truffle Chocolate Fudge';
+};
 
-function CakeDesignPreview({ design }) {
-  return (
-    <img
-      src={design.image}
-      alt={`${design.name} cake`}
-      loading="lazy"
-      style={{ display: 'block', width: '100%', height: 150, objectFit: 'cover', background: design.background }}
-    />
-  );
-}
+const detectInitialFrosting = (name) => {
+  if (!name) return 'Swiss Buttercream';
+  if (/fondant|tier|wedding|pearl|gold leaf/i.test(name)) return 'Royal Fondant';
+  if (/ganache|truffle|fudge|dark chocolate/i.test(name)) return 'Belgian Dark Ganache';
+  if (/cream cheese/i.test(name)) return 'Cream Cheese Frosting';
+  if (/whipped|fresh cream/i.test(name)) return 'Light Whipped Cream';
+  return 'Swiss Buttercream';
+};
 
 export default function CakeCustomizerModal({ isOpen, onClose, product }) {
   const { createCustomCakeRequest, activeBranch, userProfile } = useApp();
-  const initialDesign = CAKE_DESIGNS.find(design => design.id === product?.cakeDesignId) ?? CAKE_DESIGNS[0];
+
+  const [apiCakes, setApiCakes] = useState([]);
+  const [selectedCake, setSelectedCake] = useState(product || null);
+  const [isBrowseOpen, setIsBrowseOpen] = useState(!product);
+  const [activeDesignCategory, setActiveDesignCategory] = useState('All Cakes');
+  const [searchDesign, setSearchDesign] = useState('');
 
   const [weightUnit, setWeightUnit] = useState('pound'); // 'pound' or 'kg'
   const [selectedPound, setSelectedPound] = useState(1);
   const [selectedKg, setSelectedKg] = useState(1.5);
   const [customWeight, setCustomWeight] = useState(''); // for custom / large orders
-  const [flavor, setFlavor] = useState(initialDesign.flavor);
-  const [creamType, setCreamType] = useState(initialDesign.frosting);
+  const [flavor, setFlavor] = useState(() => detectInitialFlavor(product?.name));
+  const [creamType, setCreamType] = useState(() => detectInitialFrosting(product?.name));
   const [messageOnCake, setMessageOnCake] = useState('Happy Birthday Kabir!');
   const [deliveryDate, setDeliveryDate] = useState('Tomorrow');
   const [deliverySlot, setDeliverySlot] = useState('04:00 PM - 06:00 PM');
-  const [selectedDesignId, setSelectedDesignId] = useState(initialDesign.id);
-  const [activeDesignCategory, setActiveDesignCategory] = useState('All designs');
   const [customerName, setCustomerName] = useState(userProfile?.name || '');
   const [customerPhone, setCustomerPhone] = useState(userProfile?.phone || '');
   const [deliveryAddress, setDeliveryAddress] = useState('');
@@ -54,6 +65,73 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
   const [proofSubmitting, setProofSubmitting] = useState(false);
   const [proofSubmitted, setProofSubmitted] = useState(false);
   const [proofError, setProofError] = useState('');
+
+  // Fetch all real store cakes from database
+  useEffect(() => {
+    if (!isOpen) return;
+    let active = true;
+    productsApi.listPage({ categoryId: 9, pageSize: 100 })
+      .then(res => {
+        if (!active || !Array.isArray(res?.items)) return;
+        const validCakes = res.items
+          .filter(item => item.isCustomCake || (item.subCategoryName !== 'Bread & Cookies' && item.subCategoryName !== 'Pastry & Brownies' && !item.name.includes('Slice')))
+          .map(item => ({
+            id: item.id,
+            name: item.name,
+            category: item.subCategoryName || item.categoryName || 'Celebration Cake',
+            image: item.imageUrl || '/food-placeholder.svg',
+            basePrice: Number(item.basePrice) || 1750,
+            description: item.description || 'Artisanal handcrafted celebration cake by Kabir\'s Kitchen.'
+          }));
+        setApiCakes(validCakes);
+        if (!product && validCakes.length > 0) {
+          setSelectedCake(prev => prev || validCakes[0]);
+        }
+      })
+      .catch(err => {
+        console.warn('Could not load cake catalog:', err);
+      });
+    return () => { active = false; };
+  }, [isOpen, product]);
+
+  const allCakes = useMemo(() => {
+    if (apiCakes.length > 0) return apiCakes;
+    return CAKE_DESIGNS.map(d => ({
+      id: d.id,
+      name: d.name,
+      category: d.category || 'Celebration Cake',
+      image: d.image,
+      basePrice: 1750,
+      description: d.description || ''
+    }));
+  }, [apiCakes]);
+
+  const currentCake = useMemo(() => {
+    if (selectedCake) return selectedCake;
+    if (product) {
+      return {
+        id: product.id,
+        name: product.name,
+        category: product.subCategoryName || product.categoryName || 'Celebration Cake',
+        image: product.image || product.imageUrl || '/food-placeholder.svg',
+        basePrice: Number(product.basePrice) || 1750,
+        description: product.description || ''
+      };
+    }
+    return allCakes[0] || null;
+  }, [selectedCake, product, allCakes]);
+
+  const designCategories = useMemo(() => {
+    return ['All Cakes', ...new Set(allCakes.map(c => c.category))];
+  }, [allCakes]);
+
+  const visibleCakes = useMemo(() => {
+    return allCakes.filter(c => {
+      const matchCat = activeDesignCategory === 'All Cakes' || c.category === activeDesignCategory;
+      const matchSearch = !searchDesign.trim() || c.name.toLowerCase().includes(searchDesign.trim().toLowerCase());
+      return matchCat && matchSearch;
+    });
+  }, [allCakes, activeDesignCategory, searchDesign]);
 
   useEffect(() => {
     if (isOpen) {
@@ -89,14 +167,11 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, onClose]);
+
   // Rates determination based on realistic BD bakery market rates:
-  // 1 KG = 2.20462 Pounds.
-  // Standard: 800 tk / pound (1,750 tk / kg)
-  // Gourmet:  850 tk / pound (1,880 tk / kg)
-  // Wedding/Tiered: 1,050 tk / pound (2,300 tk / kg)
-  const baseRate = Number(product?.basePrice) || 1750;
-  const isTiered = baseRate >= 2100 || (product?.name && /tier|wedding|pearl|gold leaf/i.test(product.name));
-  const isGourmet = !isTiered && (baseRate >= 1800 || (product?.name && /truffle|fudge|velvet|rosette|berry|ganache|confetti/i.test(product.name)));
+  const baseRate = Number(currentCake?.basePrice) || 1750;
+  const isTiered = baseRate >= 2100 || (currentCake?.name && /tier|wedding|pearl|gold leaf/i.test(currentCake.name));
+  const isGourmet = !isTiered && (baseRate >= 1800 || (currentCake?.name && /truffle|fudge|velvet|rosette|berry|ganache|confetti/i.test(currentCake.name)));
 
   const pricePerPound = isTiered ? 1050 : (isGourmet ? 850 : 800);
   const pricePerKg = isTiered ? 2300 : (isGourmet ? 1880 : 1750);
@@ -107,18 +182,14 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
   const isCustomActive = customWeight !== '' && !isNaN(parsedCustom) && parsedCustom > 0;
   const activeQuantity = isCustomActive ? parsedCustom : (weightUnit === 'pound' ? selectedPound : selectedKg);
 
-  // Exact linear pricing in Taka:
-  // Pound: 1 lb = ৳800, 2 lb = ৳1,600, 3 lb = ৳2,400
-  // KG: 1 kg (2.2 lb) = ৳1,750, 1.5 kg = ৳2,625, 2 kg = ৳3,500
   const targetSubTotal = weightUnit === 'pound'
     ? activeQuantity * pricePerPound
     : activeQuantity * pricePerKg;
 
-  // Effective weightKg to send to backend so that backend `backendBaseRate * weightKg` yields EXACT targetSubTotal:
   const effectiveWeightKg = parseFloat((targetSubTotal / backendBaseRate).toFixed(6));
 
   useEffect(() => {
-    if (!isOpen || !product?.id) {
+    if (!isOpen || !currentCake?.id) {
       setPriceQuote(null);
       setQuoteError('');
       return undefined;
@@ -130,7 +201,7 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
     setPriceQuote(null);
     bakeryApi.quoteCustomCake({
       branchId: Number(activeBranch.id),
-      menuItemId: Number(product.id),
+      menuItemId: Number(currentCake.id),
       weightKg: Number(effectiveWeightKg),
       couponCode: appliedCoupon ? appliedCoupon.trim() : null
     }).then(quote => {
@@ -157,11 +228,7 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
     });
 
     return () => { active = false; };
-  }, [isOpen, product?.id, activeBranch.id, effectiveWeightKg, appliedCoupon]);
-  const selectedDesign = CAKE_DESIGNS.find(design => design.id === selectedDesignId) ?? CAKE_DESIGNS[0];
-  const visibleDesigns = activeDesignCategory === 'All designs'
-    ? CAKE_DESIGNS
-    : CAKE_DESIGNS.filter(design => design.category === activeDesignCategory);
+  }, [isOpen, currentCake?.id, activeBranch.id, effectiveWeightKg, appliedCoupon]);
 
   if (!isOpen) return null;
 
@@ -193,13 +260,13 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
     setSubmitError('');
     try {
       const order = await createCustomCakeRequest({
-        menuItemId: product.id,
+        menuItemId: Number(currentCake.id),
         weightKg: effectiveWeightKg,
         flavor,
         creamType,
-        tierCount: '1 Tier',
-        designName: selectedDesign.name,
-        colorTheme: selectedDesign.name,
+        tierCount: isTiered ? '2 Tier' : '1 Tier',
+        designName: currentCake.name,
+        colorTheme: currentCake.name,
         messageOnCake,
         deliveryDate: getDeliveryDate(deliveryDate),
         deliverySlot,
@@ -343,7 +410,7 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 10, borderBottom: '1px solid #e2e8f0', marginBottom: 10, fontSize: '0.88rem' }}>
                 <span style={{ color: '#64748b' }}>Design & Weight:</span>
                 <strong style={{ color: '#0f172a' }}>
-                  {product?.name || 'Custom Cake'} • {activeQuantity} {weightUnit === 'pound' ? 'Pound' : 'KG'}
+                  {currentCake?.name || product?.name || 'Custom Cake'} • {activeQuantity} {weightUnit === 'pound' ? 'Pound' : 'KG'}
                 </strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 10, borderBottom: '1px solid #e2e8f0', marginBottom: 10, fontSize: '0.88rem' }}>
@@ -561,85 +628,204 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
           </div>
         ) : (
           <form onSubmit={handleSubmit} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
-          <section aria-labelledby="cake-design-heading">
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
-              <div>
-                <h4 id="cake-design-heading" style={{ margin: 0, color: '#0f172a', fontSize: '1rem', fontWeight: 900 }}>
-                  Choose a cake design
-                </h4>
-                <p style={{ margin: '3px 0 0', color: '#64748b', fontSize: '0.78rem' }}>
-                  {CAKE_DESIGNS.length} made-to-order styles · selected: {selectedDesign.name}
-                </p>
+          {/* ─── 1. SELECTED CAKE SHOWCASE CARD ─── */}
+          <div style={{
+            background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)',
+            border: '2px solid #d8b4fe',
+            borderRadius: 16,
+            padding: 16,
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 16,
+            boxShadow: '0 4px 14px rgba(139, 92, 246, 0.08)'
+          }}>
+            <img
+              src={currentCake?.image || '/food-placeholder.svg'}
+              alt={currentCake?.name}
+              style={{
+                width: 90,
+                height: 90,
+                borderRadius: 12,
+                objectFit: 'cover',
+                flexShrink: 0,
+                border: '2px solid #ffffff',
+                boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
+              }}
+            />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+                <span style={{
+                  background: '#7e22ce',
+                  color: '#ffffff',
+                  fontSize: '0.7rem',
+                  fontWeight: 800,
+                  padding: '3px 9px',
+                  borderRadius: 999,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em'
+                }}>
+                  {currentCake?.category || 'Celebration Cake'}
+                </span>
+                <span style={{ fontSize: '0.76rem', color: '#6b21a8', fontWeight: 700 }}>
+                  Base: ৳{pricePerPound}/lb (৳{pricePerKg}/kg)
+                </span>
               </div>
-              <span style={{ flexShrink: 0, borderRadius: 999, background: '#f3e8ff', color: '#7e22ce', padding: '5px 10px', fontSize: '0.72rem', fontWeight: 800 }}>
-                {selectedDesign.category}
-              </span>
+              <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.15rem', fontWeight: 900, lineHeight: 1.3 }}>
+                {currentCake?.name || 'Custom Celebration Cake'}
+              </h3>
+              <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: '0.76rem', lineHeight: 1.35 }}>
+                {currentCake?.description}
+              </p>
             </div>
-            <div role="group" aria-label="Filter cake designs" style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 8 }}>
-              {DESIGN_CATEGORIES.map(category => (
-                <button
-                  key={category}
-                  type="button"
-                  onClick={() => setActiveDesignCategory(category)}
-                  aria-pressed={activeDesignCategory === category}
-                  style={{
-                    border: activeDesignCategory === category ? '1px solid #8b5cf6' : '1px solid #e2e8f0',
-                    borderRadius: 999,
-                    padding: '7px 11px',
-                    background: activeDesignCategory === category ? '#f5f0ff' : '#fff',
-                    color: activeDesignCategory === category ? '#6d28d9' : '#475569',
-                    whiteSpace: 'nowrap',
-                    fontSize: '0.74rem',
-                    fontWeight: 750,
-                    cursor: 'pointer'
-                  }}
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(205px, 1fr))', gap: 12 }}>
-              {visibleDesigns.map(design => {
-                const isSelected = design.id === selectedDesignId;
-                return (
-                  <button
-                    key={design.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedDesignId(design.id);
-                      setFlavor(design.flavor);
-                      setCreamType(design.frosting);
-                    }}
-                    aria-pressed={isSelected}
-                    aria-label={`${design.name}, ${design.category}${isSelected ? ', selected' : ''}`}
+            <button
+              type="button"
+              onClick={() => setIsBrowseOpen(!isBrowseOpen)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '9px 14px',
+                borderRadius: 10,
+                border: '1.5px solid #8b5cf6',
+                background: isBrowseOpen ? '#8b5cf6' : '#ffffff',
+                color: isBrowseOpen ? '#ffffff' : '#7e22ce',
+                fontSize: '0.8rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                boxShadow: '0 2px 6px rgba(139, 92, 246, 0.15)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <Sparkles size={14} />
+              {isBrowseOpen ? 'Hide Cake Catalog' : `Browse All Cakes (${allCakes.length})`}
+              {isBrowseOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
+          </div>
+
+          {/* ─── 2. BROWSE ALL CAKES GALLERY (69+ REAL STORE CAKES) ─── */}
+          {isBrowseOpen && (
+            <section aria-labelledby="cake-design-heading" style={{
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: 16,
+              padding: 16
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+                <div>
+                  <h4 id="cake-design-heading" style={{ margin: 0, color: '#0f172a', fontSize: '0.98rem', fontWeight: 900 }}>
+                    Choose From All Cakes & Bakery Catalog
+                  </h4>
+                  <p style={{ margin: '3px 0 0', color: '#64748b', fontSize: '0.76rem' }}>
+                    {allCakes.length} handcrafted cake designs available in Kabir&apos;s Kitchen
+                  </p>
+                </div>
+                <div style={{ position: 'relative', width: 220 }}>
+                  <input
+                    type="text"
+                    placeholder="Search cakes..."
+                    value={searchDesign}
+                    onChange={(e) => setSearchDesign(e.target.value)}
                     style={{
-                      overflow: 'hidden',
-                      padding: 0,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      minWidth: 0,
-                      border: isSelected ? '2px solid #8b5cf6' : '1px solid #e2e8f0',
-                      borderRadius: 12,
-                      background: '#fff',
-                      textAlign: 'left',
+                      width: '100%',
+                      padding: '7px 10px 7px 30px',
+                      borderRadius: 8,
+                      border: '1px solid #cbd5e1',
+                      fontSize: '0.78rem',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  <Search size={14} color="#94a3b8" style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)' }} />
+                </div>
+              </div>
+
+              {/* Category Filter Tabs */}
+              <div role="group" aria-label="Filter cake designs" style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 10 }}>
+                {designCategories.map(category => (
+                  <button
+                    key={category}
+                    type="button"
+                    onClick={() => setActiveDesignCategory(category)}
+                    aria-pressed={activeDesignCategory === category}
+                    style={{
+                      border: activeDesignCategory === category ? '1.5px solid #8b5cf6' : '1px solid #e2e8f0',
+                      borderRadius: 999,
+                      padding: '7px 13px',
+                      background: activeDesignCategory === category ? '#7e22ce' : '#ffffff',
+                      color: activeDesignCategory === category ? '#ffffff' : '#475569',
+                      whiteSpace: 'nowrap',
+                      fontSize: '0.74rem',
+                      fontWeight: 800,
                       cursor: 'pointer',
-                      boxShadow: isSelected ? '0 0 0 3px #8b5cf622' : '0 2px 8px rgba(15, 23, 42, .04)'
+                      transition: 'all 0.15s ease'
                     }}
                   >
-                    <CakeDesignPreview design={design} />
-                    <span style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '10px 11px 12px', textAlign: 'left' }}>
-                      <strong style={{ color: '#1e293b', fontSize: '0.86rem', lineHeight: 1.2 }}>{design.name}</strong>
-                      <span style={{ color: '#7e22ce', fontSize: '0.68rem', fontWeight: 800 }}>{design.category} design</span>
-                      <span style={{ color: '#64748b', fontSize: '0.7rem', lineHeight: 1.35 }}>{design.description}</span>
-                      <span style={{ color: '#475569', fontSize: '0.68rem', lineHeight: 1.35 }}>
-                        {design.flavor} · {design.frosting}
-                      </span>
-                    </span>
+                    {category}
                   </button>
-                );
-              })}
-            </div>
-          </section>
+                ))}
+              </div>
+
+              {/* Cakes Grid */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(185px, 1fr))',
+                gap: 12,
+                maxHeight: 380,
+                overflowY: 'auto',
+                paddingRight: 4
+              }}>
+                {visibleCakes.map(cake => {
+                  const isSelected = cake.id === currentCake?.id;
+                  return (
+                    <button
+                      key={cake.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCake(cake);
+                        setFlavor(detectInitialFlavor(cake.name));
+                        setCreamType(detectInitialFrosting(cake.name));
+                        setIsBrowseOpen(false); // auto-collapse to focus on customization!
+                      }}
+                      aria-pressed={isSelected}
+                      style={{
+                        overflow: 'hidden',
+                        padding: 0,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        minWidth: 0,
+                        border: isSelected ? '2.5px solid #8b5cf6' : '1px solid #e2e8f0',
+                        borderRadius: 12,
+                        background: isSelected ? '#faf5ff' : '#ffffff',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        boxShadow: isSelected ? '0 0 0 3px #8b5cf633' : '0 2px 6px rgba(15, 23, 42, .04)',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <img
+                        src={cake.image}
+                        alt={cake.name}
+                        loading="lazy"
+                        style={{ display: 'block', width: '100%', height: 125, objectFit: 'cover' }}
+                      />
+                      <span style={{ display: 'flex', flexDirection: 'column', gap: 3, padding: '9px 10px 11px' }}>
+                        <span style={{ color: '#7e22ce', fontSize: '0.66rem', fontWeight: 800, textTransform: 'uppercase' }}>
+                          {cake.category}
+                        </span>
+                        <strong style={{ color: '#0f172a', fontSize: '0.82rem', lineHeight: 1.25, height: 32, overflow: 'hidden' }}>
+                          {cake.name}
+                        </strong>
+                        <span style={{ color: '#059669', fontSize: '0.74rem', fontWeight: 800 }}>
+                          ৳{cake.basePrice} / kg
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
           {/* Weight / Size Selection */}
           <div style={{ background: '#f8fafc', padding: '14px', borderRadius: 12, border: '1px solid #e2e8f0' }}>
@@ -790,6 +976,9 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
               <option value="Velvet Royale Strawberry Cream">Velvet Royale Strawberry Cream (Cream Cheese)</option>
               <option value="Vanilla Bean White Chocolate">Vanilla Bean White Chocolate Ganache</option>
               <option value="Black Forest Cherry Royale">Black Forest with Spiced Cherry Compote</option>
+              <option value="Lotus Biscoff Caramel Crunch">Lotus Biscoff Caramel Crunch</option>
+              <option value="Mango Passionfruit Cream">Mango Passionfruit Cream</option>
+              <option value="Coffee Mocha Hazelnut">Coffee Mocha Hazelnut</option>
             </select>
           </div>
 
@@ -798,8 +987,14 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
             <label style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', display: 'block', marginBottom: 6 }}>
               Frosting & Decoration Style
             </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-              {['Belgian Dark Ganache', 'Swiss Buttercream', 'Royal Fondant'].map(cream => (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8 }}>
+              {[
+                'Belgian Dark Ganache',
+                'Swiss Buttercream',
+                'Royal Fondant',
+                'Cream Cheese Frosting',
+                'Light Whipped Cream'
+              ].map(cream => (
                 <button
                   key={cream}
                   type="button"
@@ -811,7 +1006,7 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
                     background: creamType === cream ? '#faf5ff' : '#ffffff',
                     color: creamType === cream ? '#7e22ce' : '#475569',
                     fontWeight: 700,
-                    fontSize: '0.8rem',
+                    fontSize: '0.78rem',
                     cursor: 'pointer'
                   }}
                 >
