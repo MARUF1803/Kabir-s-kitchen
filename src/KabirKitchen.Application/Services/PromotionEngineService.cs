@@ -61,7 +61,7 @@ public sealed class PromotionEngineService
                 c.CategoryId,
                 c.IncludeCustomCakes,
                 c.MinimumOrderAmount,
-                c.EndDateUtc))
+                DateTime.SpecifyKind(c.EndDateUtc, DateTimeKind.Utc)))
             .ToListAsync();
     }
 
@@ -379,8 +379,8 @@ public sealed class PromotionEngineService
         campaign.AllowStacking,
         campaign.IncludeCustomCakes,
         campaign.Status,
-        campaign.StartDateUtc,
-        campaign.EndDateUtc,
+        DateTime.SpecifyKind(campaign.StartDateUtc, DateTimeKind.Utc),
+        DateTime.SpecifyKind(campaign.EndDateUtc, DateTimeKind.Utc),
         campaign.RepeatWeekly);
 }
 

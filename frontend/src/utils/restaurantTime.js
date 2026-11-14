@@ -55,7 +55,10 @@ export const restaurantDateTimeToUtc = (value, timeZone) => {
 
 export const utcToRestaurantDateTimeInput = (value, timeZone) => {
   if (!value) return '';
-  const { year, month, day, hour, minute } = getParts(new Date(value), timeZone);
+  const dateObj = typeof value === 'string' && !value.endsWith('Z') && value.includes('T')
+    ? new Date(`${value}Z`)
+    : new Date(value);
+  const { year, month, day, hour, minute } = getParts(dateObj, timeZone);
   return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 };
 

@@ -63,11 +63,16 @@ const enumValues = {
 };
 
 const statusChoices = ['Draft', 'Scheduled', 'Active', 'Paused', 'Expired', 'Archived'];
-const formatCampaignTime = (value, timeZone) => new Intl.DateTimeFormat(undefined, {
-  timeZone,
-  dateStyle: 'medium',
-  timeStyle: 'short'
-}).format(new Date(value));
+const formatCampaignTime = (value, timeZone) => {
+  const dateObj = typeof value === 'string' && !value.endsWith('Z') && value.includes('T')
+    ? new Date(`${value}Z`)
+    : new Date(value);
+  return new Intl.DateTimeFormat(undefined, {
+    timeZone,
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  }).format(dateObj);
+};
 
 function Metric({ label, value }) {
   return (
@@ -188,15 +193,18 @@ export default function CampaignManagementAdmin() {
     setEditingId(campaign.id);
     setForm({
       ...campaign,
+      couponCode: campaign.couponCode || '',
+      description: campaign.description || '',
       discountValue: String(campaign.discountValue),
       maximumDiscountAmount: campaign.maximumDiscountAmount ?? '',
       branchId: campaign.branchId ?? '',
-      minimumOrderAmount: campaign.minimumOrderAmount,
+      minimumOrderAmount: campaign.minimumOrderAmount ?? 0,
       usageLimit: campaign.usageLimit ?? '',
       startDateUtc: utcToRestaurantDateTimeInput(campaign.startDateUtc, calendarTimeZone),
       endDateUtc: utcToRestaurantDateTimeInput(campaign.endDateUtc, calendarTimeZone)
     });
     setError('');
+    setNotice('');
   };
 
   const save = async (event) => {
@@ -206,23 +214,26 @@ export default function CampaignManagementAdmin() {
     setNotice('');
     try {
       const payload = {
-        ...form,
-        discountType: enumValues[form.discountType],
-        targetType: enumValues[form.targetType],
-        status: enumValues[form.status],
+        name: form.name?.trim(),
+        description: form.description?.trim() || null,
+        discountType: enumValues[form.discountType] || form.discountType,
         discountValue: Number(form.discountValue),
-        maximumDiscountAmount: form.maximumDiscountAmount === '' ? null : Number(form.maximumDiscountAmount),
+        maximumDiscountAmount: form.maximumDiscountAmount === '' || form.maximumDiscountAmount == null ? null : Number(form.maximumDiscountAmount),
+        targetType: enumValues[form.targetType] || form.targetType,
         menuItemId: form.targetType === 'Product' ? Number(form.menuItemId) : null,
         menuItemVariantId: form.targetType === 'Variant' ? Number(form.menuItemVariantId) : null,
         categoryId: form.targetType === 'Category' ? Number(form.categoryId) : null,
         branchId: form.branchId ? Number(form.branchId) : null,
-        couponCode: form.couponCode.trim() || null,
+        couponCode: form.couponCode ? form.couponCode.trim() || null : null,
         minimumOrderAmount: Number(form.minimumOrderAmount) || 0,
-        usageLimit: form.usageLimit === '' ? null : Number(form.usageLimit),
+        usageLimit: form.usageLimit === '' || form.usageLimit == null ? null : Number(form.usageLimit),
         priority: Number(form.priority) || 0,
-        repeatWeekly: Boolean(form.repeatWeekly),
+        allowStacking: false,
+        includeCustomCakes: Boolean(form.includeCustomCakes),
+        status: enumValues[form.status] || form.status,
         startDateUtc: restaurantDateTimeToUtc(form.startDateUtc, calendarTimeZone).toISOString(),
-        endDateUtc: restaurantDateTimeToUtc(form.endDateUtc, calendarTimeZone).toISOString()
+        endDateUtc: restaurantDateTimeToUtc(form.endDateUtc, calendarTimeZone).toISOString(),
+        repeatWeekly: Boolean(form.repeatWeekly)
       };
       if (editingId) {
         await apiClient.put(`/promotions/${editingId}`, payload);
@@ -533,6 +544,10 @@ export default function CampaignManagementAdmin() {
           <label><input type="checkbox" checked={form.includeCustomCakes} onChange={e => update('includeCustomCakes', e.target.checked)} /> Include custom cake menu items</label>
           <label><input type="checkbox" checked={Boolean(form.repeatWeekly)} onChange={e => update('repeatWeekly', e.target.checked)} /> Repeat weekly until paused or archived</label>
         </div>
+        {/* In-form error and notice alerts */}
+        {error && <div role="alert" style={{ ...messageStyle('#fff1f2', '#be123c'), marginBottom: 14 }}>{error}</div>}
+        {notice && <div role="status" style={{ ...messageStyle('#ecfdf5', '#047857'), marginBottom: 14 }}>{notice}</div>}
+
         <div style={{ display: 'flex', gap: 10 }}>
           <button type="submit" disabled={saving} style={primaryButton}>{saving ? 'Saving…' : editingId ? 'Save changes' : 'Create campaign'}</button>
           {editingId && <button type="button" onClick={reset} style={secondaryButton}>Cancel edit</button>}
@@ -638,5 +653,5 @@ const secondaryButton = { background: '#f1f5f9', color: '#334155', border: '1px 
 const smallButton = { border: '1px solid #cbd5e1', background: '#fff', borderRadius: 6, padding: '5px 8px', cursor: 'pointer', color: '#334155' };
 const thStyle = { textAlign: 'left', padding: '10px 8px', borderBottom: '1px solid #e2e8f0', color: '#64748b', fontSize: 12 };
 const tdStyle = { padding: '10px 8px', borderBottom: '1px solid #f1f5f9', fontSize: 13, verticalAlign: 'top' };
-const statusStyle = { display: 'inline-block', padding: '3px 8px', borderRadius: 20, background: '#fff7ed', color: '#9a3412', fontSize: 11, fontWeight: 800 };
+const _statusStyle = { display: 'inline-block', padding: '3px 8px', borderRadius: 20, background: '#fff7ed', color: '#9a3412', fontSize: 11, fontWeight: 800 };
 const messageStyle = (background, color) => ({ background, color, borderRadius: 8, padding: '10px 12px', fontWeight: 700 });

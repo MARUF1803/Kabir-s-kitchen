@@ -34,3 +34,4 @@ export const BUSINESS_CONFIG = {
   address: "Dhanmondi, Dhaka, Bangladesh",
   hours: "11:00 AM - 11:00 PM (Daily)"
 };
+
