@@ -304,8 +304,11 @@ function DashboardView({ liveReport, orders, inventory, branches, activeBranch, 
 
   const todaySales = liveReport?.summary?.netSales ?? (computedOrdersSales > 0 ? computedOrdersSales : 85450);
   const totalOrders = liveReport?.summary?.totalOrders ?? (orders.length || 248);
-  // Ja sale tai direct profit (amar product cost nai)
-  const grossProfit = todaySales;
+  // Real P&L: COGS (Raw material recipe BOM cost) + Operating expenses
+  const todayCOGS = liveReport?.summary?.totalCOGS ?? (computedOrdersSales > 0 ? 0 : 35889);
+  const totalExpenses = liveReport?.summary?.totalExpenses ?? (computedOrdersSales > 0 ? 0 : 42100);
+  const grossProfit = liveReport?.summary?.totalGrossProfit ?? (todaySales - totalExpenses);
+  const profitMargin = liveReport?.summary?.grossProfitMarginPercent ?? (todaySales > 0 ? Math.round((grossProfit / todaySales) * 100) : 0);
   const pendingOrders = orders.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled');
   const pendingCount = pendingOrders.length || 18;
 
@@ -457,10 +460,10 @@ function DashboardView({ liveReport, orders, inventory, branches, activeBranch, 
           sparkPoints={[140, 165, 180, 210, 195, 230, 248]}
         />
         <KpiCard
-          title="Gross Profit"
+          title="Gross Profit (প্রকৃত লাভ)"
           value={`৳${Number(grossProfit).toLocaleString()}`}
-          change="15.2%"
-          isPositive={true}
+          change={`${profitMargin}% margin`}
+          isPositive={grossProfit >= 0}
           icon={TrendingUp}
           iconBg="#f3e8ff"
           iconColor="#7c3aed"
@@ -728,44 +731,46 @@ function DashboardView({ liveReport, orders, inventory, branches, activeBranch, 
       {/* ── Row 4: Revenue vs Expenses + Quick Actions + Special Offer ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr', gap: '20px' }}>
 
-        {/* Revenue vs Expenses Breakdown (Direct Profit Model: Ja Sale Tai Profit) */}
+        {/* Revenue vs Expenses Breakdown (Real P&L: COGS, Operating Expenses, Net Profit) */}
         <div style={{
           background: '#ffffff', borderRadius: '16px', padding: '22px',
           border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(15,23,42,0.04)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>Revenue vs Expenses</h3>
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>Revenue vs Expenses (আয় বনাম ব্যয়)</h3>
             <div style={{ display: 'flex', gap: '12px', fontSize: '0.72rem' }}>
-              <span style={{ color: '#16a34a', fontWeight: 700 }}>● Net Profit (100%)</span>
-              <span style={{ color: '#64748b', fontWeight: 700 }}>● Product Cost (৳0)</span>
+              <span style={{ color: '#16a34a', fontWeight: 700 }}>● Net Profit ({profitMargin}%)</span>
+              <span style={{ color: '#dc2626', fontWeight: 700 }}>● Costs ({todaySales > 0 ? Math.round((totalExpenses / todaySales) * 100) : 0}%)</span>
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
             <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-              <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 600 }}>Total Revenue (বিক্রয়)</div>
-              <div style={{ fontSize: '1rem', fontWeight: 800, color: '#16a34a', marginTop: '2px' }}>
+              <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 600 }}>Total Revenue (মোট বিক্রি)</div>
+              <div style={{ fontSize: '1rem', fontWeight: 800, color: '#2563eb', marginTop: '2px' }}>
                 ৳{Number(todaySales).toLocaleString()}
               </div>
             </div>
             <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-              <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 600 }}>Product & Purchase Cost</div>
-              <div style={{ fontSize: '1rem', fontWeight: 800, color: '#64748b', marginTop: '2px' }}>
-                ৳0.00
+              <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 600 }}>Raw Material & Costs (ব্যয়)</div>
+              <div style={{ fontSize: '1rem', fontWeight: 800, color: '#dc2626', marginTop: '2px' }}>
+                ৳{Number(totalExpenses).toLocaleString()}
               </div>
             </div>
             <div style={{ background: '#f0fdf4', padding: '12px', borderRadius: '10px', border: '1px solid #bbf7d0' }}>
               <div style={{ fontSize: '0.68rem', color: '#15803d', fontWeight: 700 }}>Net Profit (প্রকৃত লাভ)</div>
               <div style={{ fontSize: '1rem', fontWeight: 800, color: '#15803d', marginTop: '2px' }}>
-                ৳{Number(todaySales).toLocaleString()}
+                ৳{Number(grossProfit).toLocaleString()}
               </div>
             </div>
           </div>
-          {/* Visual Bar representation - 100% Green direct profit */}
-          <div style={{ display: 'flex', height: '10px', borderRadius: '6px', overflow: 'hidden', background: '#dcfce7' }}>
-            <div style={{ width: '100%', background: '#16a34a', borderRadius: '4px' }} title="100% Net Profit" />
+          {/* Visual Bar representation - Green for Profit, Red for Expenses */}
+          <div style={{ display: 'flex', height: '10px', borderRadius: '6px', overflow: 'hidden', background: '#fee2e2' }}>
+            <div style={{ width: `${Math.min(100, Math.max(0, profitMargin))}%`, background: '#16a34a', borderRadius: '4px 0 0 4px' }} title={`Net Profit: ${profitMargin}%`} />
+            <div style={{ width: `${Math.min(100, Math.max(0, 100 - profitMargin))}%`, background: '#ef4444', borderRadius: '0 4px 4px 0' }} title="Expenses & COGS" />
           </div>
-          <div style={{ marginTop: '8px', fontSize: '0.68rem', color: '#15803d', fontWeight: 600 }}>
-            ✓ Direct Profit Model: All sales count directly as net profit (Zero raw material or purchase deduction).
+          <div style={{ marginTop: '8px', fontSize: '0.68rem', color: '#64748b', fontWeight: 600, display: 'flex', justifyContent: 'space-between' }}>
+            <span>Profit Margin: <strong style={{ color: '#15803d' }}>{profitMargin}%</strong></span>
+            <span>Recipe BOM + Spoilage + Packaging Deducted</span>
           </div>
         </div>
 

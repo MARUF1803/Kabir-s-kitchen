@@ -175,13 +175,19 @@ export default function SalesReportAdmin() {
     window.print();
   };
 
-  // Direct profit logic: Ja sale tai profit, product cost = 0, purchase = 0
+  // ── Real P&L variables from backend ──────────────────────────────────────
   const rawNetSales = report?.summary?.netSales ?? 0;
   const grossSales = report?.summary?.grossSales ?? rawNetSales;
-  const netProfit = rawNetSales; // 100% of Net Sales is Profit!
+  const totalCOGS = report?.summary?.totalCOGS ?? 0;          // Recipe BOM raw material cost
+  const totalWastageCost = report?.summary?.totalWastageCost ?? 0; // Kitchen wastage/spoilage
+  const totalPackagingCost = report?.summary?.totalPackagingCost ?? 0;
+  const totalDeliveryCost = report?.summary?.totalDeliveryCost ?? 0;
+  const totalExpenses = report?.summary?.totalExpenses ?? 0;  // All costs combined
+  const grossProfit = report?.summary?.totalGrossProfit ?? 0; // Real profit after costs
+  const profitMarginPct = report?.summary?.grossProfitMarginPercent ?? 0;
   const totalOrders = report?.summary?.totalOrders ?? 0;
-  const aov = report?.summary?.averageOrderValue ?? (totalOrders > 0 ? netProfit / totalOrders : 0);
-  const totalCollected = report?.summary?.totalCollected ?? rawNetSales;
+  const aov = report?.summary?.averageOrderValue ?? 0;
+  const totalCollected = report?.summary?.totalCollected ?? 0;
   const totalOutstanding = report?.summary?.totalOutstanding ?? 0;
   const totalDiscounts = report?.summary?.totalDiscounts ?? 0;
   const totalTax = report?.summary?.totalTax ?? 0;
@@ -234,7 +240,7 @@ export default function SalesReportAdmin() {
             Executive Sales & Profit Report
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: '0.78rem', color: '#64748b' }}>
-            Direct Revenue Model: All sales flow 100% as profit (Zero product/purchase cost deductions).
+            প্রকৃত P&L রিপোর্ট — Recipe BOM থেকে কাঁচামাল খরচ বাদ দিয়ে Gross Profit দেখানো হচ্ছে।
           </p>
         </div>
 
@@ -366,15 +372,17 @@ export default function SalesReportAdmin() {
       {/* ── Key Highlights Strip ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
 
-        {/* Highlight 1: 100% Profit Model Status */}
+        {/* Highlight 1: Real P&L Model Status */}
         <div style={{ background: 'linear-gradient(135deg, #0f2e21 0%, #0c2017 100%)', color: '#ffffff', borderRadius: '14px', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px', border: '1px solid rgba(34,197,94,0.2)' }}>
           <div style={{ width: '42px', height: '42px', borderRadius: '11px', background: 'rgba(34,197,94,0.2)', color: '#4ade80', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
             <CheckCircle2 size={22} />
           </div>
           <div>
-            <div style={{ fontSize: '0.68rem', color: '#86efac', textTransform: 'uppercase', fontWeight: 800 }}>Profit Model</div>
-            <div style={{ fontSize: '1.05rem', fontWeight: 800, marginTop: '2px' }}>Ja Sale Tai Direct Profit</div>
-            <div style={{ fontSize: '0.68rem', color: '#cbd5e1' }}>Product & purchase cost: ৳0</div>
+            <div style={{ fontSize: '0.68rem', color: '#86efac', textTransform: 'uppercase', fontWeight: 800 }}>Gross Profit Margin</div>
+            <div style={{ fontSize: '1.05rem', fontWeight: 800, marginTop: '2px' }}>
+              {profitMarginPct > 0 ? `${profitMarginPct}%` : 'No Orders Yet'}
+            </div>
+            <div style={{ fontSize: '0.68rem', color: '#cbd5e1' }}>Sales − Raw Material − Wastage − Packaging</div>
           </div>
         </div>
 
@@ -423,13 +431,13 @@ export default function SalesReportAdmin() {
         </div>
       </div>
 
-      {/* ── 4 Executive KPI Cards (Zero Cost / 100% Profit) ── */}
+      {/* ── 4 Executive KPI Cards (Real P&L: Revenue, COGS, Expenses, Gross Profit) ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '18px' }}>
         <ModernKpiCard
-          title="Total Net Sales (মোট বিক্রয়)"
-          value={`৳${Number(rawNetSales).toLocaleString()}`}
-          subtext={`Gross: ৳${Number(grossSales).toLocaleString()}`}
-          tag="+14.2% Growth"
+          title="মোট বিক্রয় (Gross Sales)"
+          value={`৳${Number(grossSales).toLocaleString()}`}
+          subtext={`Net (ছাড় ও ভ্যাট বাদে): ৳${Number(rawNetSales).toLocaleString()}`}
+          tag={`${totalOrders} টি অর্ডার`}
           isPositive={true}
           icon={DollarSign}
           iconBg="#dbeafe"
@@ -438,40 +446,40 @@ export default function SalesReportAdmin() {
           sparkPoints={[30, 42, 38, 55, 68, 72, 85]}
         />
         <ModernKpiCard
-          title="Net Profit (প্রকৃত লাভ)"
-          value={`৳${Number(netProfit).toLocaleString()}`}
-          subtext="Direct profit (No deductions)"
-          tag="100% Profit Margin"
-          isPositive={true}
-          icon={TrendingUp}
-          iconBg="#dcfce7"
-          iconColor="#16a34a"
-          sparkColor="#16a34a"
-          sparkPoints={[30, 42, 38, 55, 68, 72, 85]}
-        />
-        <ModernKpiCard
-          title="Product & Purchase Cost"
-          value="৳0.00"
-          subtext="BOM / COGS disabled"
-          tag="0% Cost Deducted"
-          isPositive={true}
+          title="কাঁচামাল খরচ (COGS - BOM)"
+          value={`৳${Number(totalCOGS).toLocaleString()}`}
+          subtext="রেসিপি অনুযায়ী ব্যবহৃত উপকরণের ব্যয়"
+          tag={grossSales > 0 ? `${((totalCOGS / grossSales) * 100).toFixed(1)}% কাঁচামাল ব্যয়` : 'রেসিপি হিসাব'}
+          isPositive={false}
           icon={Wallet}
-          iconBg="#f1f5f9"
-          iconColor="#64748b"
-          sparkColor="#94a3b8"
-          sparkPoints={[0, 0, 0, 0, 0, 0, 0]}
+          iconBg="#fef3c7"
+          iconColor="#d97706"
+          sparkColor="#d97706"
+          sparkPoints={[20, 25, 22, 30, 35, 32, 40]}
         />
         <ModernKpiCard
-          title="Total Orders & Collection"
-          value={totalOrders}
-          subtext={`Avg Order: ৳${Math.round(aov).toLocaleString()}`}
-          tag={`৳${Number(totalCollected).toLocaleString()} Collected`}
-          isPositive={true}
-          icon={CreditCard}
-          iconBg="#ffedd5"
-          iconColor="#ea580c"
-          sparkColor="#ea580c"
-          sparkPoints={[120, 140, 135, 175, 190, 210, 248]}
+          title="মোট খরচ ও অপচয় (Expenses)"
+          value={`৳${Number(totalExpenses).toLocaleString()}`}
+          subtext={`COGS + অপচয় + প্যাকেজিং + রাইডার`}
+          tag={grossSales > 0 ? `${((totalExpenses / grossSales) * 100).toFixed(1)}% মোট ব্যয়` : 'ব্যয় সমন্বয়'}
+          isPositive={false}
+          icon={TrendingDown}
+          iconBg="#fee2e2"
+          iconColor="#dc2626"
+          sparkColor="#dc2626"
+          sparkPoints={[25, 28, 26, 35, 40, 38, 45]}
+        />
+        <ModernKpiCard
+          title="প্রকৃত মোট লাভ (Gross Profit)"
+          value={`৳${Number(grossProfit).toLocaleString()}`}
+          subtext={`গড় অর্ডার: ৳${Math.round(aov).toLocaleString()}`}
+          tag={grossProfit >= 0 ? `${profitMarginPct}% প্রফিট মার্জিন` : 'লোকসান'}
+          isPositive={grossProfit >= 0}
+          icon={TrendingUp}
+          iconBg={grossProfit >= 0 ? "#dcfce7" : "#fee2e2"}
+          iconColor={grossProfit >= 0 ? "#16a34a" : "#dc2626"}
+          sparkColor={grossProfit >= 0 ? "#16a34a" : "#dc2626"}
+          sparkPoints={[30, 42, 38, 55, 68, 72, grossProfit > 0 ? 85 : 10]}
         />
       </div>
 
@@ -518,62 +526,103 @@ export default function SalesReportAdmin() {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
               <div>
-                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#16a34a', textTransform: 'uppercase' }}>Profitability Statement</span>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', margin: '2px 0 0' }}>100% Direct Profit Realization</h3>
+                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#16a34a', textTransform: 'uppercase' }}>Profitability Statement (লাভ-ক্ষতির হিসাব)</span>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', margin: '2px 0 0' }}>বাস্তব কাঁচামাল ও উৎপাদন ব্যয় সমন্বয় (P&L Model)</h3>
               </div>
               <div style={{ display: 'flex', gap: '14px', fontSize: '0.74rem' }}>
-                <span style={{ color: '#16a34a', fontWeight: 800 }}>● Net Sales = Net Profit</span>
-                <span style={{ color: '#94a3b8', fontWeight: 700 }}>● Product / Purchase Cost = ৳0</span>
+                <span style={{ color: '#16a34a', fontWeight: 800 }}>● Gross Profit Margin: {profitMarginPct}%</span>
+                <span style={{ color: '#dc2626', fontWeight: 700 }}>● Total Deductions: ৳{Number(totalExpenses).toLocaleString()}</span>
               </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginBottom: '16px' }}>
               <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>Total Billed Revenue</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0f172a', marginTop: '2px' }}>
+                <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>Total Billed Revenue (বিক্রি)</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#2563eb', marginTop: '2px' }}>
                   ৳{Number(rawNetSales).toLocaleString()}
                 </div>
-                <div style={{ fontSize: '0.68rem', color: '#16a34a', fontWeight: 600, marginTop: '2px' }}>
-                  Across {totalOrders} total orders
+                <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 600, marginTop: '2px' }}>
+                  মোট {totalOrders} টি অর্ডারে
                 </div>
               </div>
 
               <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>Product & Recipe Cost</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#64748b', marginTop: '2px' }}>
-                  ৳0.00
+                <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>Raw Material Cost (COGS / BOM)</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#d97706', marginTop: '2px' }}>
+                  ৳{Number(totalCOGS).toLocaleString()}
                 </div>
-                <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 600, marginTop: '2px' }}>
-                  Zero raw material deductions
+                <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 600, marginTop: '2px' }}>
+                  ইনভেন্টরি রেসিপি কাঁচামাল ব্যয়
                 </div>
               </div>
 
               <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>Purchases & Spoilage</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#64748b', marginTop: '2px' }}>
-                  ৳0.00
+                <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>Wastage & Logistics (অপচয় ও খরচ)</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#dc2626', marginTop: '2px' }}>
+                  ৳{Number(totalWastageCost + totalPackagingCost + totalDeliveryCost).toLocaleString()}
                 </div>
-                <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 600, marginTop: '2px' }}>
-                  Zero inventory loss deductions
+                <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 600, marginTop: '2px' }}>
+                  অপচয় ৳{Number(totalWastageCost).toLocaleString()} + প্যাকেজিং ৳{Number(totalPackagingCost + totalDeliveryCost).toLocaleString()}
                 </div>
               </div>
 
               <div style={{ background: '#f0fdf4', padding: '14px', borderRadius: '12px', border: '1.5px solid #86efac' }}>
-                <div style={{ fontSize: '0.7rem', color: '#15803d', fontWeight: 800 }}>Net Take-Home Profit</div>
+                <div style={{ fontSize: '0.7rem', color: '#15803d', fontWeight: 800 }}>Net Gross Profit (প্রকৃত লাভ)</div>
                 <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#15803d', marginTop: '2px' }}>
-                  ৳{Number(netProfit).toLocaleString()}
+                  ৳{Number(grossProfit).toLocaleString()}
                 </div>
                 <div style={{ fontSize: '0.68rem', color: '#16a34a', fontWeight: 700, marginTop: '2px' }}>
-                  ✓ 100% Retained Revenue
+                  ✓ {profitMarginPct}% প্রফিট মার্জিন
                 </div>
               </div>
             </div>
 
-            {/* Visual Progress Bar: 100% Green Profit */}
-            <div style={{ height: '12px', background: '#dcfce7', borderRadius: '6px', overflow: 'hidden' }}>
-              <div style={{ width: '100%', height: '100%', background: 'linear-gradient(90deg, #16a34a 0%, #15803d 100%)', borderRadius: '6px' }} title="100% Profit Realized" />
+            {/* Visual Progress Bar: Green for Profit, Red for Expenses */}
+            <div style={{ height: '12px', background: '#fee2e2', borderRadius: '6px', overflow: 'hidden', display: 'flex' }}>
+              <div style={{ width: `${Math.min(100, Math.max(0, profitMarginPct))}%`, height: '100%', background: 'linear-gradient(90deg, #16a34a 0%, #15803d 100%)', borderRadius: '6px 0 0 6px' }} title={`Gross Profit: ${profitMarginPct}%`} />
+              <div style={{ width: `${Math.min(100, Math.max(0, 100 - profitMarginPct))}%`, height: '100%', background: 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)', borderRadius: '0 6px 6px 0' }} title="COGS & Operating Expenses" />
+            </div>
+            <div style={{ marginTop: '6px', display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>
+              <span style={{ color: '#15803d' }}>● লাভ: {profitMarginPct}%</span>
+              <span style={{ color: '#dc2626' }}>● কাঁচামাল ও পরিচালন ব্যয়: {grossSales > 0 ? ((totalExpenses / grossSales) * 100).toFixed(1) : 0}%</span>
             </div>
           </div>
+
+          {/* ── Cost Breakdown by Head (খরচের বিস্তারিত খাত) ── */}
+          {report?.costBreakdown && report.costBreakdown.length > 0 && (
+            <div style={{
+              background: '#ffffff', borderRadius: '16px', padding: '20px 24px',
+              border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(15,23,42,0.03)'
+            }}>
+              <h3 style={{ fontSize: '0.98rem', fontWeight: 800, color: '#0f172a', margin: '0 0 14px' }}>
+                📋 Cost & Expense Heads Breakdown (খরচের বিস্তারিত খাত)
+              </h3>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', textAlign: 'left' }}>
+                  <thead style={{ background: '#f8fafc', color: '#64748b', fontWeight: 700 }}>
+                    <tr>
+                      <th style={{ padding: '10px 14px' }}>খরচের খাত (Expense Head)</th>
+                      <th style={{ padding: '10px 14px' }}>বিবরণ (Description)</th>
+                      <th style={{ padding: '10px 14px' }}>পরিমাণ (Amount)</th>
+                      <th style={{ padding: '10px 14px' }}>বিক্রির শতকরা হার (% of Revenue)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {report.costBreakdown.map((item, idx) => (
+                      <tr key={idx} style={{ borderTop: '1px solid #f1f5f9' }}>
+                        <td style={{ padding: '11px 14px', fontWeight: 700, color: '#0f172a' }}>{item.expenseCategory}</td>
+                        <td style={{ padding: '11px 14px', color: '#64748b' }}>{item.description}</td>
+                        <td style={{ padding: '11px 14px', fontWeight: 800, color: item.amount > 0 ? '#dc2626' : '#64748b' }}>
+                          ৳{Number(item.amount).toLocaleString()}
+                        </td>
+                        <td style={{ padding: '11px 14px', fontWeight: 600, color: '#64748b' }}>{item.percentageOfRevenue}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
           {/* Additional Secondary Financial Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '14px' }}>
@@ -639,7 +688,7 @@ export default function SalesReportAdmin() {
                     <th style={{ padding: '11px 18px' }}># Item Name</th>
                     <th style={{ padding: '11px 18px' }}>Category</th>
                     <th style={{ padding: '11px 18px' }}>Qty Sold</th>
-                    <th style={{ padding: '11px 18px' }}>Total Revenue (Profit)</th>
+                    <th style={{ padding: '11px 18px' }}>Total Revenue (মোট বিক্রি)</th>
                     <th style={{ padding: '11px 18px' }}>Share %</th>
                   </tr>
                 </thead>
@@ -737,7 +786,7 @@ export default function SalesReportAdmin() {
                 <tr>
                   <th style={{ padding: '12px 20px' }}>Rank & Branch Name</th>
                   <th style={{ padding: '12px 20px' }}>Total Orders</th>
-                  <th style={{ padding: '12px 20px' }}>Gross Revenue = Net Profit (৳)</th>
+                  <th style={{ padding: '12px 20px' }}>Total Revenue (মোট বিক্রি ৳)</th>
                   <th style={{ padding: '12px 20px' }}>Share of Enterprise Sales</th>
                   <th style={{ padding: '12px 20px' }}>Visual Share</th>
                 </tr>

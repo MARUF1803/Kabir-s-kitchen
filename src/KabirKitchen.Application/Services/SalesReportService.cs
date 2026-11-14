@@ -146,14 +146,27 @@ public class SalesReportService
         int voidCount = voidOrders.Count;
         decimal voidAmount = voidOrders.Sum(o => o.TotalAmount);
 
-        // Cost and Expense Computations (Direct Profit Model: "ja sale tai profit, product cost/purchase = 0")
-        decimal totalCOGS = 0m;
-        decimal totalPackaging = 0m;
-        decimal totalDeliveryCost = 0m;
-        decimal totalWastageCost = 0m;
-        decimal totalExpenses = 0m;
-        decimal totalGrossProfit = netSales; // Whatever is sold is 100% profit
-        decimal profitMarginPercent = netSales > 0 ? 100m : 0m;
+        // ── Cost & Expense Computations (Proper P&L Model) ──
+        // COGS = Recipe BOM cost of raw materials consumed for each dish sold
+        decimal totalCOGS = validOrders.Sum(o => o.TotalIngredientBOMCost);
+        // Packaging and rider delivery cost per order
+        decimal totalPackaging = validOrders.Sum(o => o.PackagingCost);
+        decimal totalDeliveryCost = validOrders.Sum(o => o.DeliveryCost);
+
+        // Wastage/Spoilage Loss from WastageRecords table
+        var wastageQuery = _context.WastageRecords
+            .Where(w => w.CreatedAtUtc >= fromDate && w.CreatedAtUtc <= toDate)
+            .AsNoTracking();
+        if (filter.BranchId.HasValue && filter.BranchId.Value > 0)
+            wastageQuery = wastageQuery.Where(w => w.BranchId == filter.BranchId.Value);
+        var wastageRecords = await wastageQuery.ToListAsync();
+        decimal totalWastageCost = wastageRecords.Sum(w => w.QuantityWasted * w.UnitCostAtWastage);
+
+        // Total Expenses = COGS + Wastage + Packaging + Delivery
+        decimal totalExpenses = totalCOGS + totalWastageCost + totalPackaging + totalDeliveryCost;
+        // Gross Profit = Net Revenue after discounts − All Costs
+        decimal totalGrossProfit = (grossSales - totalDiscounts) - totalExpenses;
+        decimal profitMarginPercent = grossSales > 0 ? Math.Round((totalGrossProfit / grossSales) * 100, 2) : 0;
 
         var summary = new SalesSummaryDto(
             GrossSales: grossSales,
@@ -280,15 +293,19 @@ public class SalesReportService
             })
             .ToList();
 
-        // 11. Cost & Expense Breakdown by Head (Direct Profit: Product/Purchase Cost = 0)
+        // 11. Cost & Expense Breakdown by Head (Real P&L Model)
+        // COGS = Raw material cost from Recipe BOM (ingredient cost per dish sold)
+        // Wastage = Spoilage/loss recorded in WastageRecords table
+        // Packaging = Per-order packaging cost
+        // Delivery = Per-order rider/logistics cost
         var costBreakdown = new List<ExpenseHeadDto>
         {
-            new("Product Cost (COGS)", "Zero cost model (Ja sale tai profit - no recipe deductions)", 0m, 0m),
-            new("Purchases & Supplies", "Zeroed inventory purchase costs", 0m, 0m),
-            new("Kitchen Wastage & Loss", "Zeroed kitchen spoilage costs", 0m, 0m),
-            new("Packaging & Logistics", "Zeroed packaging & rider deductions", 0m, 0m),
-            new("Promotional Discounts Given", "Reductions from coupon codes and campaign offers", totalDiscounts, grossSales > 0 ? Math.Round((totalDiscounts / grossSales) * 100, 1) : 0),
-            new("Govt VAT (5%)", "Statutory value-added tax collected and transferred to NBR", totalTax, grossSales > 0 ? Math.Round((totalTax / grossSales) * 100, 1) : 0)
+            new("Raw Material Cost (COGS)", "Recipe ingredient BOM cost — কাঁচামাল খরচ (প্রতিটি ডিশের Ingredient Cost)", totalCOGS, grossSales > 0 ? Math.Round((totalCOGS / grossSales) * 100, 1) : 0),
+            new("Kitchen Wastage & Spoilage", "নষ্ট বা নষ্ট হওয়া কাঁচামালের খরচ (WastageRecords থেকে)", totalWastageCost, grossSales > 0 ? Math.Round((totalWastageCost / grossSales) * 100, 1) : 0),
+            new("Packaging Cost", "প্যাকেজিং খরচ (প্রতিটি অর্ডারের Packaging)", totalPackaging, grossSales > 0 ? Math.Round((totalPackaging / grossSales) * 100, 1) : 0),
+            new("Delivery / Logistics Cost", "রাইডার ও ডেলিভারি খরচ", totalDeliveryCost, grossSales > 0 ? Math.Round((totalDeliveryCost / grossSales) * 100, 1) : 0),
+            new("Promotional Discounts Given", "কুপন ও ক্যাম্পেইন অফারে দেওয়া ছাড়", totalDiscounts, grossSales > 0 ? Math.Round((totalDiscounts / grossSales) * 100, 1) : 0),
+            new("Govt VAT (5%)", "সরকারি মূসক — NBR-তে জমা হয়", totalTax, grossSales > 0 ? Math.Round((totalTax / grossSales) * 100, 1) : 0)
         };
 
         // 12. Recent Orders
