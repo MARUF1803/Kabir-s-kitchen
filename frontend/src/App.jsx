@@ -1,4 +1,4 @@
-﻿import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { AppProvider } from './context/AppContext.jsx';
 import { useApp } from './context/useApp';
 import Navbar from './components/Navbar';

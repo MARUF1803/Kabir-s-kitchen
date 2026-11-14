@@ -20,6 +20,14 @@ import { usersApi, reportsApi, inventoryAdjustApi, inventoryApi, ordersApi } fro
 
 const TABS = ['Overview', 'Orders', 'Cake Bookings', 'Cash Shifts', 'Reservations', 'Production ERP', 'Promotions', 'Campaigns', 'Products', 'Inventory', 'Procurement', 'Staff', 'Reports', 'Support'];
 
+const TAB_GROUPS = [
+  { id: 'all', label: 'All', count: 14 },
+  { id: 'operations', label: 'Operations', count: 5, tabs: ['Overview', 'Orders', 'Cake Bookings', 'Cash Shifts', 'Reservations'] },
+  { id: 'kitchen', label: 'Kitchen & Catalog', count: 4, tabs: ['Production ERP', 'Products', 'Inventory', 'Procurement'] },
+  { id: 'growth', label: 'Marketing & Reports', count: 3, tabs: ['Promotions', 'Campaigns', 'Reports'] },
+  { id: 'system', label: 'Staff & Support', count: 2, tabs: ['Staff', 'Support'] }
+];
+
 const STATUS_COLORS = {
   Confirmed:      { bg: '#dbeafe', color: '#1d4ed8' },
   Preparing:      { bg: '#fff7ed', color: '#c2410c' },
@@ -60,6 +68,17 @@ export default function AdminPage() {
   const { activeBranch, branches, authUser, signOut, setCurrentMode } = useApp();
   const activeBranchId = activeBranch?.id;
   const [tab, setTab] = useState('Overview');
+  const [activeGroup, setActiveGroup] = useState('all');
+
+  const visibleTabs = useMemo(() => {
+    if (activeGroup === 'all') return TABS;
+    const group = TAB_GROUPS.find(g => g.id === activeGroup);
+    return group ? group.tabs : TABS;
+  }, [activeGroup]);
+
+  const handleSelectTab = useCallback((t) => {
+    setTab(t);
+  }, []);
   const [liveReport, setLiveReport] = useState(null);
   const [reportError, setReportError] = useState('');
   const [orders, setOrders] = useState([]);
@@ -339,12 +358,69 @@ export default function AdminPage() {
           </div>
         </header>
 
+        {/* ── Tab Groups / Sections ── */}
+        <div style={{
+          background: '#f8fafc',
+          borderBottom: '1px solid #e2e8f0',
+          padding: '8px 16px',
+          display: 'flex',
+          gap: '8px',
+          overflowX: 'auto',
+          alignItems: 'center',
+          scrollbarWidth: 'none'
+        }}>
+          <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap', marginRight: '4px' }}>
+            Section:
+          </span>
+          {TAB_GROUPS.map(g => {
+            const isSelected = activeGroup === g.id;
+            return (
+              <button
+                key={g.id}
+                onClick={() => {
+                  setActiveGroup(g.id);
+                  if (g.tabs && !g.tabs.includes(tab)) {
+                    setTab(g.tabs[0]);
+                  }
+                }}
+                style={{
+                  padding: '4px 12px',
+                  borderRadius: '16px',
+                  border: isSelected ? '1px solid #ea580c' : '1px solid #e2e8f0',
+                  background: isSelected ? '#fff7ed' : '#ffffff',
+                  color: isSelected ? '#ea580c' : '#475569',
+                  fontSize: '0.75rem',
+                  fontWeight: isSelected ? 700 : 500,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <span>{g.label}</span>
+                <span style={{
+                  background: isSelected ? '#ea580c' : '#f1f5f9',
+                  color: isSelected ? '#fff' : '#64748b',
+                  borderRadius: '10px',
+                  padding: '1px 6px',
+                  fontSize: '0.65rem',
+                  fontWeight: 700
+                }}>
+                  {g.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
         {/* ── Tabs ── */}
         <div style={{ background:'#fff', borderBottom:'1px solid #e2e8f0', padding:'0 16px', display:'flex', gap:'4px', overflowX:'auto', width:'100%', maxWidth:'100%', boxSizing:'border-box' }}>
-          {TABS.map(t => (
+          {visibleTabs.map(t => (
             <button
               key={t}
-              onClick={() => setTab(t)}
+              onClick={() => handleSelectTab(t)}
               style={{
                 padding: '12px 18px', border: 'none', background:'transparent',
                 fontSize: '0.84rem', fontWeight: tab === t ? 800 : 600, cursor: 'pointer',

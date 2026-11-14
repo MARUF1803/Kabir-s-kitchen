@@ -3,6 +3,7 @@ import { X, Cake, Info, CheckCircle2, MessageSquare, AlertCircle, Tag, CreditCar
 import { useApp } from '../context/useApp';
 import { CAKE_DESIGNS } from '../data/cakeDesigns';
 import { bakeryApi, productsApi } from '../services/api';
+import { BUSINESS_CONFIG } from '../config/businessConfig';
 
 const detectInitialFlavor = (name) => {
   if (!name) return 'Dutch Truffle Chocolate Fudge';
@@ -433,16 +434,16 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8, fontSize: '0.75rem' }}>
                 <div style={{ background: '#ffffff', padding: '6px 10px', borderRadius: 8, border: '1px solid #fde68a' }}>
-                  <strong style={{ color: '#d946ef' }}>bKash (বিকাশ):</strong>
-                  <div style={{ fontWeight: 800, color: '#0f172a' }}>01791665634</div>
+                  <strong style={{ color: BUSINESS_CONFIG.paymentAccounts.bkash.color }}>bKash (বিকাশ):</strong>
+                  <div style={{ fontWeight: 800, color: '#0f172a' }}>{BUSINESS_CONFIG.paymentAccounts.bkash.number}</div>
                 </div>
                 <div style={{ background: '#ffffff', padding: '6px 10px', borderRadius: 8, border: '1px solid #fde68a' }}>
-                  <strong style={{ color: '#f97316' }}>Nagad (নগদ):</strong>
-                  <div style={{ fontWeight: 800, color: '#0f172a' }}>01791665634</div>
+                  <strong style={{ color: BUSINESS_CONFIG.paymentAccounts.nagad.color }}>Nagad (নগদ):</strong>
+                  <div style={{ fontWeight: 800, color: '#0f172a' }}>{BUSINESS_CONFIG.paymentAccounts.nagad.number}</div>
                 </div>
                 <div style={{ background: '#ffffff', padding: '6px 10px', borderRadius: 8, border: '1px solid #fde68a' }}>
-                  <strong style={{ color: '#8b5cf6' }}>Rocket (রকেট):</strong>
-                  <div style={{ fontWeight: 800, color: '#0f172a' }}>01791665634</div>
+                  <strong style={{ color: BUSINESS_CONFIG.paymentAccounts.rocket.color }}>Rocket (রকেট):</strong>
+                  <div style={{ fontWeight: 800, color: '#0f172a' }}>{BUSINESS_CONFIG.paymentAccounts.rocket.number}</div>
                 </div>
                 <div style={{ background: '#ffffff', padding: '6px 10px', borderRadius: 8, border: '1px solid #fde68a' }}>
                   <strong style={{ color: '#10b981' }}>Kitchen Counter:</strong>
@@ -587,7 +588,7 @@ export default function CakeCustomizerModal({ isOpen, onClose, product }) {
 
             <div style={{ display: 'flex', gap: 12, maxWidth: 520, margin: '0 auto' }}>
               <a
-                href={`https://wa.me/8801791665634?text=${encodeURIComponent(`Hi Kabir's Kitchen! I booked custom cake #${bookingSuccess.customOrderNumber || bookingSuccess.customNumber} (${bookingSuccess.customerName}). Size: ${activeQuantity} ${weightUnit === 'pound' ? 'Pound' : 'KG'}. Payment: Paid ৳${proofAmount || bookingSuccess.advanceRequired || bookingSuccess.advanceRequiredAmount} via ${proofMethod}${proofTrx ? ` (TrxID: ${proofTrx})` : ''}. Please verify and confirm my order.`)}`}
+                href={`https://wa.me/${BUSINESS_CONFIG.whatsapp}?text=${encodeURIComponent(`Hi Kabir's Kitchen! I booked custom cake #${bookingSuccess.customOrderNumber || bookingSuccess.customNumber} (${bookingSuccess.customerName}). Size: ${activeQuantity} ${weightUnit === 'pound' ? 'Pound' : 'KG'}. Payment: Paid ৳${proofAmount || bookingSuccess.advanceRequired || bookingSuccess.advanceRequiredAmount} via ${proofMethod}${proofTrx ? ` (TrxID: ${proofTrx})` : ''}. Please verify and confirm my order.`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
