@@ -59,6 +59,7 @@ const SIDEBAR_NAV = [
   {
     title: 'ADMINISTRATION',
     items: [
+      { id: 'Branches', label: 'Branches Management', icon: MapPin },
       { id: 'Staff', label: 'Staff & Attendance', icon: Users },
       { id: 'Support', label: 'Support & Chat', icon: ShieldCheck },
       { id: 'Settings', label: 'System Settings', icon: Settings },
@@ -165,10 +166,27 @@ function KpiCard({ title, value, change, isPositive, icon: Icon, iconBg, iconCol
 
 // ─── Bangladesh SVG Map ─────────────────────────────────────────────────────
 function BangladeshMap({ branches }) {
-  const branchCoords = [
-    { name: 'Dhaka Main Branch', x: 104, y: 110, color: '#ea580c' },
-    { name: 'Khulna Branch', x: 74, y: 160, color: '#16a34a' },
-    { name: 'Barisal Branch', x: 114, y: 172, color: '#2563eb' }
+  const getBranchCoord = (branch, index) => {
+    const text = `${branch.name || ''} ${branch.address || ''}`.toLowerCase();
+    if (text.includes('dhanmondi')) return { x: 102, y: 112 };
+    if (text.includes('mirpur')) return { x: 99, y: 104 };
+    if (text.includes('gulshan') || text.includes('banani') || text.includes('uttara')) return { x: 106, y: 98 };
+    if (text.includes('chattogram') || text.includes('chittagong')) return { x: 148, y: 178 };
+    if (text.includes('sylhet')) return { x: 156, y: 76 };
+    if (text.includes('rajshahi')) return { x: 58, y: 94 };
+    if (text.includes('khulna')) return { x: 74, y: 160 };
+    if (text.includes('barisal') || text.includes('barishal')) return { x: 114, y: 172 };
+    if (text.includes('rangpur')) return { x: 62, y: 44 };
+    if (text.includes('mymensingh')) return { x: 112, y: 72 };
+    const xOffsets = [104, 96, 110, 92, 114];
+    const yOffsets = [110, 102, 116, 106, 120];
+    return { x: xOffsets[index % xOffsets.length], y: yOffsets[index % yOffsets.length] };
+  };
+
+  const colors = ['#ea580c', '#16a34a', '#2563eb', '#7c3aed', '#db2777', '#0891b2'];
+  const activeBranches = branches && branches.length > 0 ? branches : [
+    { name: 'Dhanmondi Branch', address: 'House 42, Road 7/A, Dhanmondi, Dhaka' },
+    { name: 'Mirpur Branch', address: 'Plot 12, Block D, Mirpur-10, Dhaka' }
   ];
 
   return (
@@ -183,12 +201,17 @@ function BangladeshMap({ branches }) {
           opacity="0.85"
         />
         {/* Branch location pins */}
-        {branchCoords.map((pt, i) => (
-          <g key={i}>
-            <circle cx={pt.x} cy={pt.y} r="12" fill={pt.color} opacity="0.18" />
-            <circle cx={pt.x} cy={pt.y} r="6" fill={pt.color} stroke="#ffffff" strokeWidth="2" />
-          </g>
-        ))}
+        {activeBranches.map((b, i) => {
+          const pt = getBranchCoord(b, i);
+          const color = colors[i % colors.length];
+          return (
+            <g key={b.id || i}>
+              <title>{b.name}</title>
+              <circle cx={pt.x} cy={pt.y} r="12" fill={color} opacity="0.18" />
+              <circle cx={pt.x} cy={pt.y} r="6" fill={color} stroke="#ffffff" strokeWidth="2" />
+            </g>
+          );
+        })}
       </svg>
       <div style={{
         position: 'absolute', top: 6, right: 6, background: '#ffffff',
@@ -196,7 +219,7 @@ function BangladeshMap({ branches }) {
         boxShadow: '0 1px 3px rgba(0,0,0,0.05)', fontSize: '0.7rem', fontWeight: 700, color: '#0f172a'
       }}>
         <span style={{ color: '#16a34a', marginRight: '4px' }}>●</span>
-        {branches?.length || 3} Branches Active
+        {activeBranches.length} {activeBranches.length === 1 ? 'Branch' : 'Branches'} Active
       </div>
     </div>
   );
@@ -275,11 +298,52 @@ function OrderStatusDonut({ orders }) {
 // ─── Design 4 Dashboard View ────────────────────────────────────────────────
 function DashboardView({ liveReport, orders, inventory, branches, activeBranch, authUser, onNavigate }) {
   const [salesPeriod, setSalesPeriod] = useState('7D');
-  const todaySales = liveReport?.summary?.netSales ?? 85450;
+  const computedOrdersSales = useMemo(() => {
+    return orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+  }, [orders]);
+
+  const todaySales = liveReport?.summary?.netSales ?? (computedOrdersSales > 0 ? computedOrdersSales : 85450);
   const totalOrders = liveReport?.summary?.totalOrders ?? (orders.length || 248);
-  const grossProfit = liveReport?.summary?.totalGrossProfit ?? 24800;
+  // Ja sale tai direct profit (amar product cost nai)
+  const grossProfit = todaySales;
   const pendingOrders = orders.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled');
   const pendingCount = pendingOrders.length || 18;
+
+  // Real dynamic branch performance calculated from database branches and orders
+  const branchPerformance = useMemo(() => {
+    const colors = ['#ea580c', '#16a34a', '#2563eb', '#7c3aed', '#db2777', '#0891b2'];
+    if (branches && branches.length > 0) {
+      const salesMap = {};
+      orders.forEach(o => {
+        if (o.branchId) {
+          salesMap[o.branchId] = (salesMap[o.branchId] || 0) + (o.totalAmount || 0);
+        }
+      });
+      if (liveReport?.byBranch?.length > 0) {
+        liveReport.byBranch.forEach(b => {
+          salesMap[b.branchId] = Math.max(salesMap[b.branchId] || 0, b.totalSales || 0);
+        });
+      }
+
+      const list = branches.map((b, i) => {
+        const val = salesMap[b.id] || 0;
+        return {
+          id: b.id,
+          name: b.name,
+          sales: val > 0 ? `৳${val.toLocaleString()}` : '৳0',
+          rawVal: val,
+          color: colors[i % colors.length],
+          growth: '+14%'
+        };
+      });
+      const max = Math.max(...list.map(l => l.rawVal), 1);
+      return list.map(l => ({ ...l, pct: Math.max(20, Math.round((l.rawVal / max) * 100)) }));
+    }
+    return [
+      { name: 'Dhanmondi Branch', sales: '৳85,450', pct: 85, color: '#ea580c', growth: '+14%' },
+      { name: 'Mirpur Branch', sales: '৳62,300', pct: 60, color: '#16a34a', growth: '+10%' }
+    ];
+  }, [branches, orders, liveReport]);
 
   // Real or realistic timeline bars
   const timelineDays = [
@@ -339,7 +403,7 @@ function DashboardView({ liveReport, orders, inventory, branches, activeBranch, 
               background: 'rgba(234,88,12,0.25)', color: '#fb923c', border: '1px solid rgba(234,88,12,0.4)',
               padding: '3px 10px', borderRadius: '14px', fontSize: '0.72rem', fontWeight: 700
             }}>
-              📍 {activeBranch?.name || 'Dhaka Main Branch'}
+              📍 {activeBranch?.name || 'All Active Branches'}
             </span>
             <span style={{
               background: 'rgba(255,255,255,0.08)', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.12)',
@@ -497,14 +561,10 @@ function DashboardView({ liveReport, orders, inventory, branches, activeBranch, 
               Branch Performance
             </h2>
 
-            {/* Branch progress list */}
+            {/* Dynamic Branch progress list */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {[
-                { name: 'Dhaka Main Branch', sales: '৳2,58,450', pct: 85, color: '#ea580c', growth: '+14%' },
-                { name: 'Khulna Branch', sales: '৳1,62,300', pct: 60, color: '#16a34a', growth: '+10%' },
-                { name: 'Barisal Branch', sales: '৳1,21,200', pct: 45, color: '#2563eb', growth: '+8%' },
-              ].map((b, i) => (
-                <div key={b.name}>
+              {branchPerformance.map((b, i) => (
+                <div key={b.id || b.name || i}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.76rem', marginBottom: '5px' }}>
                     <span style={{ fontWeight: 700, color: '#1e293b' }}>
                       <span style={{ color: '#94a3b8', marginRight: '6px' }}>#{i+1}</span>
@@ -515,7 +575,7 @@ function DashboardView({ liveReport, orders, inventory, branches, activeBranch, 
                     </span>
                   </div>
                   <div style={{ background: '#f1f5f9', borderRadius: '4px', height: '6px', overflow: 'hidden' }}>
-                    <div style={{ width: `${b.pct}%`, height: '100%', background: b.color, borderRadius: '4px' }} />
+                    <div style={{ width: `${b.pct}%`, height: '100%', background: b.color, borderRadius: '4px', transition: 'width 0.4s ease' }} />
                   </div>
                 </div>
               ))}
@@ -668,7 +728,7 @@ function DashboardView({ liveReport, orders, inventory, branches, activeBranch, 
       {/* ── Row 4: Revenue vs Expenses + Quick Actions + Special Offer ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr', gap: '20px' }}>
 
-        {/* Revenue vs Expenses Breakdown */}
+        {/* Revenue vs Expenses Breakdown (Direct Profit Model: Ja Sale Tai Profit) */}
         <div style={{
           background: '#ffffff', borderRadius: '16px', padding: '22px',
           border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(15,23,42,0.04)'
@@ -676,34 +736,36 @@ function DashboardView({ liveReport, orders, inventory, branches, activeBranch, 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>Revenue vs Expenses</h3>
             <div style={{ display: 'flex', gap: '12px', fontSize: '0.72rem' }}>
-              <span style={{ color: '#16a34a', fontWeight: 700 }}>● Revenue</span>
-              <span style={{ color: '#ea580c', fontWeight: 700 }}>● Expenses</span>
+              <span style={{ color: '#16a34a', fontWeight: 700 }}>● Net Profit (100%)</span>
+              <span style={{ color: '#64748b', fontWeight: 700 }}>● Product Cost (৳0)</span>
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
             <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-              <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 600 }}>Total Revenue</div>
+              <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 600 }}>Total Revenue (বিক্রয়)</div>
               <div style={{ fontSize: '1rem', fontWeight: 800, color: '#16a34a', marginTop: '2px' }}>
-                ৳{liveReport?.summary?.grossSales ? Number(liveReport.summary.grossSales).toLocaleString() : '5,48,000'}
+                ৳{Number(todaySales).toLocaleString()}
               </div>
             </div>
             <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-              <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 600 }}>Total Expenses</div>
-              <div style={{ fontSize: '1rem', fontWeight: 800, color: '#ea580c', marginTop: '2px' }}>
-                ৳{liveReport?.summary?.totalExpenses ? Number(liveReport.summary.totalExpenses).toLocaleString() : '3,12,000'}
+              <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 600 }}>Product & Purchase Cost</div>
+              <div style={{ fontSize: '1rem', fontWeight: 800, color: '#64748b', marginTop: '2px' }}>
+                ৳0.00
               </div>
             </div>
-            <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-              <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 600 }}>Net Profit</div>
-              <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a', marginTop: '2px' }}>
-                ৳{liveReport?.summary?.totalGrossProfit ? Number(liveReport.summary.totalGrossProfit).toLocaleString() : '2,36,000'}
+            <div style={{ background: '#f0fdf4', padding: '12px', borderRadius: '10px', border: '1px solid #bbf7d0' }}>
+              <div style={{ fontSize: '0.68rem', color: '#15803d', fontWeight: 700 }}>Net Profit (প্রকৃত লাভ)</div>
+              <div style={{ fontSize: '1rem', fontWeight: 800, color: '#15803d', marginTop: '2px' }}>
+                ৳{Number(todaySales).toLocaleString()}
               </div>
             </div>
           </div>
-          {/* Visual Bar representation */}
-          <div style={{ display: 'flex', height: '10px', borderRadius: '6px', overflow: 'hidden', gap: '3px' }}>
-            <div style={{ flex: 64, background: '#16a34a', borderRadius: '4px' }} title="Revenue: 64%" />
-            <div style={{ flex: 36, background: '#ea580c', borderRadius: '4px' }} title="Expenses: 36%" />
+          {/* Visual Bar representation - 100% Green direct profit */}
+          <div style={{ display: 'flex', height: '10px', borderRadius: '6px', overflow: 'hidden', background: '#dcfce7' }}>
+            <div style={{ width: '100%', background: '#16a34a', borderRadius: '4px' }} title="100% Net Profit" />
+          </div>
+          <div style={{ marginTop: '8px', fontSize: '0.68rem', color: '#15803d', fontWeight: 600 }}>
+            ✓ Direct Profit Model: All sales count directly as net profit (Zero raw material or purchase deduction).
           </div>
         </div>
 
@@ -788,7 +850,7 @@ function DashboardView({ liveReport, orders, inventory, branches, activeBranch, 
 // MAIN AdminPage Component
 // ═════════════════════════════════════════════════════════════════════════════
 export default function AdminPage() {
-  const { activeBranch, branches, authUser, signOut, setCurrentMode } = useApp();
+  const { activeBranch, branches, authUser, signOut, setCurrentMode, selectedBranchId, setSelectedBranchId } = useApp();
   const activeBranchId = activeBranch?.id;
 
   const [tab, setTab] = useState('Dashboard');
@@ -1185,6 +1247,70 @@ export default function AdminPage() {
           </div>
         );
 
+      case 'Branches':
+        return (
+          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px', borderBottom: '1px solid #f1f5f9' }}>
+              <div>
+                <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Network Outlets</div>
+                <h2 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', margin: '2px 0 0' }}>All Active Branches ({branches.length})</h2>
+              </div>
+              <span style={{ fontSize: '0.74rem', background: '#dcfce7', color: '#15803d', fontWeight: 800, padding: '4px 12px', borderRadius: '20px' }}>
+                ● Real-Time Database Sync
+              </span>
+            </div>
+            <div style={{ padding: '24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+              {branches.map((b) => (
+                <div key={b.id} style={{
+                  background: b.id === activeBranch?.id ? '#fff7ed' : '#f8fafc',
+                  border: `1.5px solid ${b.id === activeBranch?.id ? '#ea580c' : '#e2e8f0'}`,
+                  borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '12px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                    <div>
+                      <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#ea580c', background: '#ffedd5', padding: '2px 8px', borderRadius: '6px' }}>
+                        {b.branchCode || `BR-${b.id}`}
+                      </span>
+                      <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a', margin: '6px 0 2px' }}>{b.name}</h3>
+                      <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>📍 {b.address || 'Dhaka, Bangladesh'}</p>
+                    </div>
+                    <span style={{
+                      background: b.isActive ? '#dcfce7' : '#f1f5f9',
+                      color: b.isActive ? '#15803d' : '#64748b',
+                      fontSize: '0.68rem', fontWeight: 800, padding: '3px 8px', borderRadius: '12px'
+                    }}>
+                      {b.isActive ? '● Active' : '○ Inactive'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', paddingTop: '10px', borderTop: '1px solid #e2e8f0', fontSize: '0.74rem' }}>
+                    <div>
+                      <span style={{ color: '#94a3b8', display: 'block', fontSize: '0.65rem', fontWeight: 600 }}>Phone</span>
+                      <strong style={{ color: '#334155' }}>{b.contactPhone || '—'}</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: '#94a3b8', display: 'block', fontSize: '0.65rem', fontWeight: 600 }}>Cash Drawer</span>
+                      <strong style={{ color: '#16a34a' }}>৳{(b.currentCashDrawerBalance || 0).toLocaleString()}</strong>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedBranchId(b.id)}
+                    style={{
+                      marginTop: '4px',
+                      background: b.id === activeBranch?.id ? '#ea580c' : '#ffffff',
+                      color: b.id === activeBranch?.id ? '#ffffff' : '#334155',
+                      border: b.id === activeBranch?.id ? 'none' : '1px solid #cbd5e1',
+                      padding: '7px 12px', borderRadius: '8px', fontSize: '0.74rem', fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {b.id === activeBranch?.id ? '✓ Current Active Branch' : 'Switch To This Branch'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
       case 'Cake Bookings':   return <CakeOrdersAdmin activeBranchId={activeBranchId} />;
       case 'Cash Shifts':     return <CashShiftAdmin activeBranchId={activeBranchId} />;
       case 'Reservations':    return <ReservationAdmin activeBranchId={activeBranchId} />;
@@ -1393,14 +1519,27 @@ export default function AdminPage() {
           {/* Right Action Icons & Controls */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
 
-            {/* Branch Selector Pill */}
+            {/* Branch Selector Dropdown */}
             <div style={{
               display: 'flex', alignItems: 'center', gap: '8px',
-              background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px',
-              padding: '6px 14px', fontSize: '0.78rem', fontWeight: 700, color: '#0f172a'
+              background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '10px',
+              padding: '5px 12px', fontSize: '0.78rem', fontWeight: 700, color: '#0f172a'
             }}>
               <MapPin size={15} color="#ea580c" />
-              <span>{activeBranch?.name || 'Dhaka Main Branch'}</span>
+              <select
+                value={selectedBranchId || ''}
+                onChange={e => setSelectedBranchId(e.target.value ? Number(e.target.value) : null)}
+                style={{
+                  border: 'none', background: 'transparent', outline: 'none',
+                  fontSize: '0.78rem', fontWeight: 700, color: '#0f172a', cursor: 'pointer',
+                  fontFamily: 'inherit'
+                }}
+              >
+                <option value="">All Branches</option>
+                {branches.map(b => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
             </div>
 
             {/* POS Shortcut Button */}

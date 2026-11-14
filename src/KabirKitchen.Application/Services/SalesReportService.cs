@@ -146,25 +146,14 @@ public class SalesReportService
         int voidCount = voidOrders.Count;
         decimal voidAmount = voidOrders.Sum(o => o.TotalAmount);
 
-        // Cost and Expense Computations
-        decimal totalCOGS = validOrders.Sum(o => o.TotalIngredientBOMCost);
-        decimal totalPackaging = validOrders.Sum(o => o.PackagingCost);
-        decimal totalDeliveryCost = validOrders.Sum(o => o.DeliveryCost);
-
-        // Wastage Loss query
-        var wastageQuery = _context.WastageRecords
-            .Where(w => w.CreatedAtUtc >= fromDate && w.CreatedAtUtc <= toDate)
-            .AsNoTracking();
-        if (filter.BranchId.HasValue && filter.BranchId.Value > 0)
-        {
-            wastageQuery = wastageQuery.Where(w => w.BranchId == filter.BranchId.Value);
-        }
-        var wastageRecords = await wastageQuery.ToListAsync();
-        decimal totalWastageCost = wastageRecords.Sum(w => w.QuantityWasted * w.UnitCostAtWastage);
-
-        decimal totalExpenses = totalCOGS + totalWastageCost + totalPackaging + totalDeliveryCost;
-        decimal totalGrossProfit = (grossSales - totalDiscounts) - totalExpenses;
-        decimal profitMarginPercent = grossSales > 0 ? Math.Round((totalGrossProfit / grossSales) * 100, 2) : 0;
+        // Cost and Expense Computations (Direct Profit Model: "ja sale tai profit, product cost/purchase = 0")
+        decimal totalCOGS = 0m;
+        decimal totalPackaging = 0m;
+        decimal totalDeliveryCost = 0m;
+        decimal totalWastageCost = 0m;
+        decimal totalExpenses = 0m;
+        decimal totalGrossProfit = netSales; // Whatever is sold is 100% profit
+        decimal profitMarginPercent = netSales > 0 ? 100m : 0m;
 
         var summary = new SalesSummaryDto(
             GrossSales: grossSales,
@@ -291,13 +280,13 @@ public class SalesReportService
             })
             .ToList();
 
-        // 11. Cost & Expense Breakdown by Head
+        // 11. Cost & Expense Breakdown by Head (Direct Profit: Product/Purchase Cost = 0)
         var costBreakdown = new List<ExpenseHeadDto>
         {
-            new("Food Ingredients (BOM COGS)", "Direct cost of raw materials and ingredients consumed in recipes", totalCOGS, grossSales > 0 ? Math.Round((totalCOGS / grossSales) * 100, 1) : 0),
-            new("Kitchen Wastage & Spoilage", "Cost of expired, burnt, or quality failed ingredients", totalWastageCost, grossSales > 0 ? Math.Round((totalWastageCost / grossSales) * 100, 1) : 0),
-            new("Packaging Materials", "Food containers, bags, boxes, and cutlery for takeaway/delivery", totalPackaging, grossSales > 0 ? Math.Round((totalPackaging / grossSales) * 100, 1) : 0),
-            new("Rider Logistics & Delivery", "Direct logistics and fuel allowance cost for delivery riders", totalDeliveryCost, grossSales > 0 ? Math.Round((totalDeliveryCost / grossSales) * 100, 1) : 0),
+            new("Product Cost (COGS)", "Zero cost model (Ja sale tai profit - no recipe deductions)", 0m, 0m),
+            new("Purchases & Supplies", "Zeroed inventory purchase costs", 0m, 0m),
+            new("Kitchen Wastage & Loss", "Zeroed kitchen spoilage costs", 0m, 0m),
+            new("Packaging & Logistics", "Zeroed packaging & rider deductions", 0m, 0m),
             new("Promotional Discounts Given", "Reductions from coupon codes and campaign offers", totalDiscounts, grossSales > 0 ? Math.Round((totalDiscounts / grossSales) * 100, 1) : 0),
             new("Govt VAT (5%)", "Statutory value-added tax collected and transferred to NBR", totalTax, grossSales > 0 ? Math.Round((totalTax / grossSales) * 100, 1) : 0)
         };
