@@ -14,17 +14,41 @@ export default function Navbar({ onOpenSearch, onOpenReservation }) {
   };
 
   const handleNavClick = (targetId, mode = 'customer') => {
-    changeMode(mode);
-    setMobileOpen(false);
-    if (targetId) {
-      setTimeout(() => {
-        if (targetId === 'top') {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        } else {
-          document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 50);
+    if (currentMode !== mode) {
+      changeMode(mode);
     }
+    setMobileOpen(false);
+
+    // Clear search query so full menu or home is displayed cleanly
+    if (targetId === 'top' || targetId === 'menu') {
+      onOpenSearch?.('');
+      const searchInputs = document.querySelectorAll('.global-search input');
+      searchInputs.forEach(input => { input.value = ''; });
+    }
+
+    const performScroll = (attempts = 0) => {
+      if (targetId === 'top' || targetId === 'home') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      // Try finding the primary target element or fallback to categories for menu
+      const el = document.getElementById(targetId) || (targetId === 'menu' ? document.getElementById('categories') : null);
+      if (el) {
+        const header = document.querySelector('.site-header');
+        const headerHeight = header ? header.offsetHeight : 130;
+        const targetTop = el.getBoundingClientRect().top + window.pageYOffset - headerHeight - 16;
+        window.scrollTo({
+          top: Math.max(0, targetTop),
+          behavior: 'smooth'
+        });
+      } else if (attempts < 12) {
+        // Retry every 80ms while lazy-loaded StorefrontPage finishes rendering
+        setTimeout(() => performScroll(attempts + 1), 80);
+      }
+    };
+
+    setTimeout(() => performScroll(0), 40);
   };
 
   const isStaff = authUser && (authUser.role === 'Admin' || authUser.role === 'SuperAdmin' || authUser.role === 'Cashier' || authUser.role === 'BranchManager');

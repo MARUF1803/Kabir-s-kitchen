@@ -49,7 +49,7 @@ function AppContent() {
           />
         );
       case 'tracking':
-        return <OrderTracker onBackToMenu={() => setSelectedProduct(null)} />;
+        return <OrderTracker onBackToMenu={() => setCurrentMode('customer')} />;
       case 'pos':
         return <PosPage />;
       case 'kds':

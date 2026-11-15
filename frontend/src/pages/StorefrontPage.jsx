@@ -630,7 +630,7 @@ export default function StorefrontPage({ onSelectProduct, onOpenCakeCustomizer, 
       )}
 
       {/* ─── 4. FOOD CATEGORIES (EXACTLY ONE SECTION) ─── */}
-      <section className="circular-categories-section" id="categories" style={{ margin: '42px 0 36px' }}>
+      <section className="circular-categories-section" id="categories" style={{ margin: '42px 0 36px', scrollMarginTop: '130px' }}>
         <div className="section-heading" style={{ marginBottom: '16px' }}>
           <div>
             <span className="eyebrow" style={{ color: '#ea580c' }}>Menu Categories</span>
@@ -671,7 +671,7 @@ export default function StorefrontPage({ onSelectProduct, onOpenCakeCustomizer, 
       )}
 
       {activePromotions.length > 0 && (
-        <section id="offers" className="menu-section" style={{ margin: '54px 0' }}>
+        <section id="offers" className="menu-section" style={{ margin: '54px 0', scrollMarginTop: '130px' }}>
           <div className="menu-section__heading">
             <div>
               <span className="eyebrow" style={{ color: '#ea580c' }}><Flame size={14} /> Active campaigns</span>
@@ -735,7 +735,7 @@ export default function StorefrontPage({ onSelectProduct, onOpenCakeCustomizer, 
       )}
 
       {/* ─── 8. CUSTOM CAKE STUDIO ─── */}
-      <section className="custom-cake-banner" id="cakes" style={{ margin: '54px 0' }}>
+      <section className="custom-cake-banner" id="cakes" style={{ margin: '54px 0', scrollMarginTop: '130px' }}>
         <div className="custom-cake-banner__image">
           <img src={featuredCake?.image || '/food-placeholder.svg'} alt={featuredCake?.name || 'Custom cake options'} />
         </div>
@@ -757,7 +757,7 @@ export default function StorefrontPage({ onSelectProduct, onOpenCakeCustomizer, 
 
       {/* ─── 9. RECOMMENDED FOR YOU (HORIZONTAL REUSABLE PRODUCT CAROUSEL) ─── */}
       {/* ─── FULL MENU SECTION WITH SEARCH & FILTERS ─── */}
-      <section className="menu-section" id="menu" style={{ margin: '54px 0' }}>
+      <section className="menu-section" id="menu" style={{ margin: '54px 0', scrollMarginTop: '130px' }}>
         <div className="menu-section__heading">
           <div>
             <span className="eyebrow" style={{ color: '#ea580c' }}>Full Catalog</span>
