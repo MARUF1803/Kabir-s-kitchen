@@ -1236,7 +1236,7 @@ export default function AdminPage() {
                         onChange={e => handleRoleChange(staff.id, e.target.value)}
                         style={{ width: '100%', padding: '5px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.75rem', fontWeight: 600, background: '#fff', color: '#0f172a' }}
                       >
-                        {['SuperAdmin', 'Admin', 'BranchManager', 'Cashier', 'Chef'].map(r => <option key={r} value={r}>{r}</option>)}
+                        {['SuperAdmin', 'Admin', 'BranchManager', 'Cashier', 'Salesman', 'Waiter', 'Chef', 'KitchenStaff', 'Rider'].map(r => <option key={r} value={r}>{r}</option>)}
                       </select>
                     </div>
                     <div>
@@ -1707,8 +1707,12 @@ export default function AdminPage() {
                     onChange={e => setNewStaff({ ...newStaff, role: e.target.value })}
                     style={{ width: '100%', padding: '9px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: '0.82rem', background: '#fff', color: '#0f172a' }}
                   >
-                    <option value="Cashier">Cashier (POS)</option>
-                    <option value="Chef">Chef (KDS)</option>
+                    <option value="Salesman">Salesman (Floor Sales / সেলস ম্যান)</option>
+                    <option value="Waiter">Waiter (Floor Captain / ওয়েটার)</option>
+                    <option value="Cashier">Cashier (POS / ক্যাশিয়ার)</option>
+                    <option value="Chef">Chef (Master Chef / KDS)</option>
+                    <option value="KitchenStaff">Kitchen Staff (কিচেন সহকারী)</option>
+                    <option value="Rider">Rider (Delivery / রাইডার)</option>
                     <option value="BranchManager">Branch Manager</option>
                     <option value="Admin">Admin</option>
                   </select>
