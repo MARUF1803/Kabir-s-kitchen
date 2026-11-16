@@ -295,6 +295,8 @@ public class ProcurementService
 
         if (po == null) return Result<PurchaseOrderResponseDto>.Failure("Purchase order not found.");
         if (dto.Amount <= 0) return Result<PurchaseOrderResponseDto>.Failure("Payment amount must be greater than zero.");
+        if (dto.Amount > po.DueAmount)
+            return Result<PurchaseOrderResponseDto>.Failure($"Payment amount (৳{dto.Amount:N2}) cannot exceed remaining due amount (৳{po.DueAmount:N2}). Total bill: ৳{po.TotalAmount:N2}, Already paid: ৳{po.PaidAmount:N2}.");
 
         var payment = new PurchasePayment
         {
