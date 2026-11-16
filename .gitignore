@@ -17,6 +17,7 @@
 **/obj/
 publish/
 **/publish/
+*.zip
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
