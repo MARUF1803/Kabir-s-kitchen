@@ -10,6 +10,7 @@ public static class CatalogSeeder
     private static readonly HashSet<string> RetiredMenuItemSlugs = new(StringComparer.OrdinalIgnoreCase)
     {
         "crispy-chicken-burger",
+        "chocolate-fudge-cake",
         "chocolate-fudge-cake-1kg",
         "catalog-menu-burgers-1",
         "catalog-menu-burgers-3",
@@ -55,6 +56,14 @@ public static class CatalogSeeder
             category.IsDeleted = false;
             category.DeletedAtUtc = null;
             category.DeletedBy = null;
+        }
+
+        foreach (var legacySlug in new[] { "bakery-cakes", "burgers", "chinese-thai" })
+        {
+            if (categoriesBySlug.TryGetValue(legacySlug, out var legacyCat))
+            {
+                legacyCat.IsActive = false;
+            }
         }
 
         await context.SaveChangesAsync(cancellationToken);
