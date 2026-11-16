@@ -19,7 +19,7 @@ import ReservationAdmin from '../components/ReservationAdmin';
 import CashShiftAdmin from '../components/CashShiftAdmin';
 import CakeOrdersAdmin from '../components/CakeOrdersAdmin';
 import StaffAttendanceAdmin from '../components/StaffAttendanceAdmin';
-import { usersApi, reportsApi, inventoryAdjustApi, inventoryApi, ordersApi } from '../services/api';
+import { usersApi, reportsApi, inventoryAdjustApi, inventoryApi, ordersApi, branchesApi } from '../services/api';
 
 // ─── Sidebar Groups ─────────────────────────────────────────────────────────
 const SIDEBAR_NAV = [
@@ -880,6 +880,13 @@ export default function AdminPage() {
   const [staffTab, setStaffTab] = useState('attendance'); // 'attendance' | 'roles'
   const [newStaff, setNewStaff] = useState({ name: '', email: '', password: '', role: 'Cashier', branchId: activeBranch?.id || '' });
 
+  // Branch Management States
+  const [showAddBranchModal, setShowAddBranchModal] = useState(false);
+  const [branchForm, setBranchForm] = useState({ name: '', branchCode: '', address: '', contactPhone: '', contactEmail: '', openingTime: '10:00', closingTime: '23:00', initialCashDrawerBalance: '', isActive: true });
+  const [branchSaving, setBranchSaving] = useState(false);
+  const [branchError, setBranchError] = useState('');
+  const [branchSuccess, setBranchSuccess] = useState('');
+
   // Stock Adjustment Modal
   const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [adjustForm, setAdjustForm] = useState({ ingredientId: '', qty: '', unitCost: '', remarks: '' });
@@ -959,6 +966,34 @@ export default function AdminPage() {
   useEffect(() => {
     if (tab === 'Dashboard' || tab === 'Inventory') loadInventory();
   }, [tab, loadInventory]);
+
+  // Handle Create Branch
+  const handleCreateBranch = async () => {
+    if (!branchForm.name.trim()) { setBranchError('Branch Name আবশ্যক।'); return; }
+    if (!branchForm.branchCode.trim()) { setBranchError('Branch Code আবশ্যক (যেমন: UTT-03)।'); return; }
+    setBranchSaving(true); setBranchError(''); setBranchSuccess('');
+    try {
+      await branchesApi.create({
+        name: branchForm.name,
+        branchCode: branchForm.branchCode,
+        address: branchForm.address || null,
+        contactPhone: branchForm.contactPhone || null,
+        contactEmail: branchForm.contactEmail || null,
+        openingTime: branchForm.openingTime || '10:00',
+        closingTime: branchForm.closingTime || '23:00',
+        initialCashDrawerBalance: branchForm.initialCashDrawerBalance ? parseFloat(branchForm.initialCashDrawerBalance) : 0,
+        isActive: branchForm.isActive
+      });
+      setBranchSuccess('নতুন branch সফলভাবে তৈরি হয়েছে! 🎉');
+      setBranchForm({ name: '', branchCode: '', address: '', contactPhone: '', contactEmail: '', openingTime: '10:00', closingTime: '23:00', initialCashDrawerBalance: '', isActive: true });
+      setShowAddBranchModal(false);
+      window.location.reload(); // refresh to pick up new branch from context
+    } catch (err) {
+      setBranchError(err.response?.data?.message || err.message || 'Branch তৈরি করতে সমস্যা হয়েছে।');
+    } finally {
+      setBranchSaving(false);
+    }
+  };
 
   const loadStaff = useCallback(async () => {
     setStaffLoading(true);
@@ -1294,10 +1329,31 @@ export default function AdminPage() {
                 <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Network Outlets</div>
                 <h2 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', margin: '2px 0 0' }}>All Active Branches ({branches.length})</h2>
               </div>
-              <span style={{ fontSize: '0.74rem', background: '#dcfce7', color: '#15803d', fontWeight: 800, padding: '4px 12px', borderRadius: '20px' }}>
-                ● Real-Time Database Sync
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '0.74rem', background: '#dcfce7', color: '#15803d', fontWeight: 800, padding: '4px 12px', borderRadius: '20px' }}>
+                  ● Real-Time Database Sync
+                </span>
+                <button
+                  onClick={() => { setShowAddBranchModal(true); setBranchError(''); setBranchSuccess(''); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', border: 'none', background: '#ea580c', color: '#fff', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
+                >
+                  <PlusCircle size={15} /> নতুন Branch যোগ
+                </button>
+              </div>
             </div>
+
+            {/* Branch Success/Error Messages */}
+            {branchSuccess && (
+              <div style={{ margin: '12px 24px', padding: '10px 14px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', color: '#16a34a', fontWeight: 600 }}>
+                ✓ {branchSuccess}
+              </div>
+            )}
+            {branchError && (
+              <div style={{ margin: '12px 24px', padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#dc2626', fontWeight: 600 }}>
+                ⚠ {branchError}
+              </div>
+            )}
+
             <div style={{ padding: '24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
               {branches.map((b) => (
                 <div key={b.id} style={{
@@ -1347,6 +1403,74 @@ export default function AdminPage() {
                 </div>
               ))}
             </div>
+
+            {/* Add Branch Modal */}
+            {showAddBranchModal && (
+              <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ background: '#fff', borderRadius: '16px', width: '560px', maxWidth: '95vw', maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+                  <div style={{ padding: '20px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ margin: 0, fontWeight: 800, color: '#0f172a' }}>🏪 নতুন Branch তৈরি করুন</h3>
+                      <p style={{ margin: '4px 0 0', fontSize: '0.78rem', color: '#64748b' }}>নতুন outlet / শাখার তথ্য পূরণ করুন</p>
+                    </div>
+                    <button onClick={() => setShowAddBranchModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}><X size={20} /></button>
+                  </div>
+                  <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    {branchError && (
+                      <div style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#dc2626', fontSize: '0.85rem' }}>⚠ {branchError}</div>
+                    )}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                      <div>
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#374151', display: 'block', marginBottom: '5px' }}>Branch Name *</label>
+                        <input value={branchForm.name} onChange={e => setBranchForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Uttara Branch" style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '0.85rem', boxSizing: 'border-box' }} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#374151', display: 'block', marginBottom: '5px' }}>Branch Code *</label>
+                        <input value={branchForm.branchCode} onChange={e => setBranchForm(f => ({ ...f, branchCode: e.target.value }))} placeholder="e.g. UTT-03" style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '0.85rem', boxSizing: 'border-box' }} />
+                      </div>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#374151', display: 'block', marginBottom: '5px' }}>Address</label>
+                      <input value={branchForm.address} onChange={e => setBranchForm(f => ({ ...f, address: e.target.value }))} placeholder="e.g. House 5, Road 10, Uttara Sector-3, Dhaka" style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '0.85rem', boxSizing: 'border-box' }} />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                      <div>
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#374151', display: 'block', marginBottom: '5px' }}>Phone Number</label>
+                        <input value={branchForm.contactPhone} onChange={e => setBranchForm(f => ({ ...f, contactPhone: e.target.value }))} placeholder="e.g. 01700-000003" style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '0.85rem', boxSizing: 'border-box' }} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#374151', display: 'block', marginBottom: '5px' }}>Email (Optional)</label>
+                        <input value={branchForm.contactEmail} onChange={e => setBranchForm(f => ({ ...f, contactEmail: e.target.value }))} placeholder="uttara@kabirskitchen.com" style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '0.85rem', boxSizing: 'border-box' }} />
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                      <div>
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#374151', display: 'block', marginBottom: '5px' }}>Opening Time</label>
+                        <input type="time" value={branchForm.openingTime} onChange={e => setBranchForm(f => ({ ...f, openingTime: e.target.value }))} style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '0.85rem', boxSizing: 'border-box' }} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#374151', display: 'block', marginBottom: '5px' }}>Closing Time</label>
+                        <input type="time" value={branchForm.closingTime} onChange={e => setBranchForm(f => ({ ...f, closingTime: e.target.value }))} style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '0.85rem', boxSizing: 'border-box' }} />
+                      </div>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#374151', display: 'block', marginBottom: '5px' }}>প্রারম্ভিক Cash Drawer Balance (৳)</label>
+                      <input type="number" value={branchForm.initialCashDrawerBalance} onChange={e => setBranchForm(f => ({ ...f, initialCashDrawerBalance: e.target.value }))} placeholder="0" min="0" style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '0.85rem', boxSizing: 'border-box' }} />
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: '#f8fafc', borderRadius: '8px' }}>
+                      <input type="checkbox" checked={branchForm.isActive} onChange={e => setBranchForm(f => ({ ...f, isActive: e.target.checked }))} id="branchActive" />
+                      <label htmlFor="branchActive" style={{ fontSize: '0.85rem', fontWeight: 600, color: '#374151', cursor: 'pointer' }}>Branch সক্রিয় রাখুন (Active)</label>
+                    </div>
+                  </div>
+                  <div style={{ padding: '16px 24px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                    <button onClick={() => setShowAddBranchModal(false)} style={{ padding: '9px 20px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', color: '#374151', fontWeight: 600, cursor: 'pointer' }}>বাতিল</button>
+                    <button onClick={handleCreateBranch} disabled={branchSaving} style={{ padding: '9px 20px', borderRadius: '8px', border: 'none', background: '#ea580c', color: '#fff', fontWeight: 700, cursor: branchSaving ? 'not-allowed' : 'pointer', opacity: branchSaving ? 0.7 : 1 }}>
+                      {branchSaving ? 'তৈরি হচ্ছে...' : '🏪 Branch তৈরি করুন'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         );
 

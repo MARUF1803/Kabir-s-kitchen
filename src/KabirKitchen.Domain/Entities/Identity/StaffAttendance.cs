@@ -30,3 +30,4 @@ public class StaffAttendance : BaseEntity
     public string? DeviceSerialOrIp { get; set; }
     public string? Remarks { get; set; }
 }
+

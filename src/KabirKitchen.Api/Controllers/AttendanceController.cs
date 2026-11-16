@@ -301,3 +301,4 @@ public record ManualAttendanceDto(
     string? Status,
     string? Remarks
 );
+

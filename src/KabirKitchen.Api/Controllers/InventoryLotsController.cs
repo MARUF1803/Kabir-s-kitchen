@@ -131,4 +131,53 @@ public class InventoryLotsController : ControllerBase
         await _context.SaveChangesAsync();
         return Ok(new { message = $"Lot {lot.LotNumber} quarantined successfully." });
     }
+
+    [HttpPost("release-quarantine")]
+    [Authorize(Roles = "Admin,SuperAdmin,BranchManager")]
+    public async Task<IActionResult> ReleaseQuarantine([FromBody] ReleaseQuarantineRequestDto dto)
+    {
+        var lot = await _context.InventoryLots.FindAsync(dto.LotId);
+        if (lot == null) return NotFound(new { message = "Lot not found." });
+        if (!_currentUser.HasAccessToBranch(lot.BranchId)) return Forbid();
+
+        if (lot.Status == InventoryLotStatus.Quarantined)
+        {
+            lot.Status = InventoryLotStatus.Active;
+            lot.UpdatedAtUtc = DateTime.UtcNow;
+
+            if (lot.LotType == InventoryLotType.RawMaterial && lot.IngredientId.HasValue)
+            {
+                var stock = await _context.BranchIngredientStocks
+                    .FirstOrDefaultAsync(s => s.BranchId == lot.BranchId && s.IngredientId == lot.IngredientId.Value);
+                if (stock != null)
+                {
+                    stock.QuarantinedQuantity = Math.Max(0, stock.QuarantinedQuantity - lot.RemainingQuantity);
+                }
+            }
+            else if (lot.LotType == InventoryLotType.SubRecipe && lot.SubRecipeId.HasValue)
+            {
+                var stock = await _context.BranchSubRecipeStocks
+                    .FirstOrDefaultAsync(s => s.BranchId == lot.BranchId && s.SubRecipeId == lot.SubRecipeId.Value);
+                if (stock != null)
+                {
+                    stock.QuarantinedQuantity = Math.Max(0, stock.QuarantinedQuantity - lot.RemainingQuantity);
+                }
+            }
+            else if (lot.LotType == InventoryLotType.FinishedProduct && lot.MenuItemId.HasValue)
+            {
+                var stock = await _context.BranchProductStocks
+                    .FirstOrDefaultAsync(s => s.BranchId == lot.BranchId && s.MenuItemId == lot.MenuItemId.Value);
+                if (stock != null)
+                {
+                    stock.QuarantinedQuantity = Math.Max(0, stock.QuarantinedQuantity - lot.RemainingQuantity);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        return Ok(new { message = $"Lot {lot.LotNumber} released from quarantine to active stock." });
+    }
 }
+
+public record ReleaseQuarantineRequestDto(long LotId, string? Remarks = null);

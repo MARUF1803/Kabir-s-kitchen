@@ -153,6 +153,10 @@ export const categoriesApi = {
 export const branchesApi = {
   /** GET /api/branches */
   list: () => apiClient.get('/branches').then(r => r.data),
+  get: (id) => apiClient.get(`/branches/${id}`).then(r => r.data),
+  create: (data) => apiClient.post('/branches', data).then(r => r.data),
+  update: (id, data) => apiClient.put(`/branches/${id}`, data).then(r => r.data),
+  toggleActive: (id) => apiClient.patch(`/branches/${id}/toggle-active`).then(r => r.data),
 };
 
 export const promotionsApi = {
@@ -372,6 +376,7 @@ export const reservoirsApi = {
 export const inventoryLotsApi = {
   list: (params = {}) => apiClient.get('/inventorylots', { params }).then(r => r.data),
   quarantine: (data) => apiClient.post('/inventorylots/quarantine', data).then(r => r.data),
+  releaseQuarantine: (data) => apiClient.post('/inventorylots/release-quarantine', data).then(r => r.data),
 };
 
 export const finishedProductStocksApi = {
