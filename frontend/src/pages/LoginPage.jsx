@@ -87,7 +87,7 @@ export default function LoginPage({ onBack }) {
         {error && !success && (
           <div className="lp-error" role="alert"><AlertCircle size={16} /><span>{error}</span></div>
         )}
-        {import.meta.env.DEV && !success && (
+        {!success && (
           <form className="lp-form" onSubmit={handleLogin} noValidate>
             <div className="lp-field">
               <label htmlFor="lp-email">Email address</label>
