@@ -8,15 +8,17 @@ export default defineConfig(({ command, mode }) => {
       throw new Error('VITE_API_BASE_URL must be set to the deployed API base URL (including /api) for production builds.')
     }
 
-    let apiUrl
-    try {
-      apiUrl = new URL(env.VITE_API_BASE_URL)
-    } catch {
-      throw new Error('VITE_API_BASE_URL must be an absolute HTTPS URL for production builds.')
-    }
+    if (env.VITE_API_BASE_URL !== '/api') {
+      let apiUrl
+      try {
+        apiUrl = new URL(env.VITE_API_BASE_URL)
+      } catch {
+        throw new Error('VITE_API_BASE_URL must be /api or an absolute URL for production builds.')
+      }
 
-    if (apiUrl.protocol !== 'https:') {
-      throw new Error('VITE_API_BASE_URL must use HTTPS for production builds.')
+      if (apiUrl.protocol !== 'https:' && apiUrl.protocol !== 'http:') {
+        throw new Error('VITE_API_BASE_URL must use http: or https: for production builds.')
+      }
     }
   }
 
