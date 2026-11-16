@@ -3,13 +3,31 @@ import {
   Building2, PlusCircle, DollarSign, FileText, ArrowDownToLine, RefreshCw, X,
   History, AlertCircle, CheckCircle2, Eye, Trash2, Plus
 } from 'lucide-react';
-import { suppliersApi, procurementApi } from '../services/api';
+import { suppliersApi, procurementApi, inventoryApi } from '../services/api';
+
+const UNIT_OPTIONS = [
+  { value: 'Liter', label: 'Liter (লিটার - Ltr)' },
+  { value: 'Kilogram', label: 'Kilogram (কেজি - Kg)' },
+  { value: 'Piece', label: 'Piece (পিস - Pcs)' },
+  { value: 'Gram', label: 'Gram (গ্রাম - gm)' },
+  { value: 'Milliliter', label: 'Milliliter (মি.লি. - ml)' },
+];
+
+const mapBaseUnitToString = (unit) => {
+  if (unit === 4 || unit === 'Liter' || unit === 'liter') return 'Liter';
+  if (unit === 2 || unit === 'Kilogram' || unit === 'kilogram') return 'Kilogram';
+  if (unit === 5 || unit === 'Piece' || unit === 'piece') return 'Piece';
+  if (unit === 1 || unit === 'Gram' || unit === 'gram') return 'Gram';
+  if (unit === 3 || unit === 'Milliliter' || unit === 'milliliter') return 'Milliliter';
+  return 'Kilogram';
+};
 
 export default function ProcurementAdmin({ activeBranch }) {
   const branchId = activeBranch?.id || 1;
   const [activeSubTab, setActiveSubTab] = useState('orders'); // 'orders' | 'suppliers'
   const [suppliers, setSuppliers] = useState([]);
   const [purchaseOrders, setPurchaseOrders] = useState([]);
+  const [availableIngredients, setAvailableIngredients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
@@ -32,7 +50,7 @@ export default function ProcurementAdmin({ activeBranch }) {
     invoiceOrChallanNumber: '',
     notes: '',
     items: [
-      { ingredientId: 1, ingredientName: 'Rice / Grains', quantityOrdered: 50, unitUsed: 'Kilogram', unitCost: 110 }
+      { ingredientId: 5, ingredientName: 'Refined Cooking Oil', quantityOrdered: 10, unitUsed: 'Liter', unitCost: 200 }
     ],
     initialPayment: '',
     paymentMethod: 'Cash',
@@ -56,12 +74,14 @@ export default function ProcurementAdmin({ activeBranch }) {
 
   const loadData = useCallback(async () => {
     try {
-      const [suppliersData, posData] = await Promise.all([
+      const [suppliersData, posData, stocksData] = await Promise.all([
         suppliersApi.list(),
-        procurementApi.listPOs({ branchId })
+        procurementApi.listPOs({ branchId }),
+        inventoryApi.list(branchId).catch(() => [])
       ]);
       setSuppliers(suppliersData || []);
       setPurchaseOrders(posData || []);
+      setAvailableIngredients(stocksData || []);
       setError(null);
     } catch (err) {
       setError(err?.response?.data?.message || 'Failed to load procurement data.');
@@ -85,6 +105,24 @@ export default function ProcurementAdmin({ activeBranch }) {
     } catch (err) {
       alert(err?.response?.data?.message || 'Failed to create supplier.');
     }
+  };
+
+  const handleIngredientNameChange = (idx, nameValue) => {
+    const updated = [...newPo.items];
+    updated[idx].ingredientName = nameValue;
+
+    // Check if entered name matches an existing ingredient in system
+    const matched = availableIngredients.find(
+      i => i.ingredientName.toLowerCase() === nameValue.trim().toLowerCase()
+    );
+    if (matched) {
+      updated[idx].ingredientId = matched.ingredientId;
+      updated[idx].unitUsed = mapBaseUnitToString(matched.baseUnit);
+      if (matched.lastPurchaseCostPerUnit > 0) {
+        updated[idx].unitCost = matched.lastPurchaseCostPerUnit;
+      }
+    }
+    setNewPo({ ...newPo, items: updated });
   };
 
   // Calculations for New PO
@@ -142,7 +180,7 @@ export default function ProcurementAdmin({ activeBranch }) {
         supplierId: '',
         invoiceOrChallanNumber: '',
         notes: '',
-        items: [{ ingredientId: 1, ingredientName: 'Rice / Grains', quantityOrdered: 50, unitUsed: 'Kilogram', unitCost: 110 }],
+        items: [{ ingredientId: 5, ingredientName: 'Refined Cooking Oil', quantityOrdered: 10, unitUsed: 'Liter', unitCost: 200 }],
         initialPayment: '',
         paymentMethod: 'Cash',
         paymentReference: ''
@@ -164,6 +202,7 @@ export default function ProcurementAdmin({ activeBranch }) {
         ingredientName: item.ingredientName || `Ingredient #${item.ingredientId}`,
         quantityOrdered: item.quantityOrdered,
         quantityReceived: item.quantityOrdered,
+        unitUsed: item.unitUsed || 'Kilogram',
         actualUnitCost: item.unitCost
       }))
     });
@@ -371,7 +410,10 @@ export default function ProcurementAdmin({ activeBranch }) {
                           {new Date(po.orderDateUtc).toLocaleDateString()}
                         </td>
                         <td style={{ padding: '14px 18px' }}>
-                          {po.items?.length || 0} ingredient(s)
+                          <div style={{ fontWeight: 600 }}>{po.items?.length || 0} item(s)</div>
+                          <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                            {(po.items || []).map(i => `${i.quantityOrdered} ${i.unitUsed}`).join(', ')}
+                          </div>
                         </td>
                         <td style={{ padding: '14px 18px', fontWeight: 700 }}>৳{(po.totalAmount || 0).toLocaleString()}</td>
                         <td style={{ padding: '14px 18px', color: '#16a34a', fontWeight: 700 }}>
@@ -480,14 +522,14 @@ export default function ProcurementAdmin({ activeBranch }) {
         </div>
       )}
 
-      {/* ── MODAL: Create Purchase Order ── */}
+      {/* ── MODAL: Create Purchase Order (With Clear Unit/UOM Selector) ── */}
       {showCreatePoModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#fff', borderRadius: '14px', padding: '24px', width: '640px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+          <div style={{ background: '#fff', borderRadius: '14px', padding: '24px', width: '720px', maxWidth: '96vw', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>Create New Purchase Order</h3>
-                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>সাপ্লায়ার থেকে মালামাল ক্রয়ের চালান ও পেমেন্ট রেকর্ড</div>
+                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>কাঁচামাল ও মালামাল ক্রয়ের সঠিক একক (লিটার, কেজি, পিস), চালান ও পেমেন্ট রেকর্ড</div>
               </div>
               <button onClick={() => setShowCreatePoModal(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#64748b' }}><X size={20} /></button>
             </div>
@@ -531,10 +573,13 @@ export default function ProcurementAdmin({ activeBranch }) {
                 </div>
               </div>
 
-              {/* Ingredients List */}
+              {/* Ingredients List With Explicit Unit Selector */}
               <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 700, color: '#334155' }}>Ordered Ingredients & Items</h4>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 700, color: '#334155' }}>ক্রয়কৃত আইটেম ও একক (Ordered Items & Units)</h4>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>তেল কিনলে লিটার, ডিম কিনলে পিস, চাল/চিকেন কিনলে কেজি নির্বাচন করুন</span>
+                  </div>
                   <button
                     type="button"
                     onClick={() => {
@@ -551,25 +596,33 @@ export default function ProcurementAdmin({ activeBranch }) {
 
                 {newPo.items.map((item, idx) => {
                   const lineTotal = (parseFloat(item.quantityOrdered) || 0) * (parseFloat(item.unitCost) || 0);
+                  const unitLabel = item.unitUsed || 'Unit';
                   return (
-                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr auto', gap: '8px', alignItems: 'center', marginBottom: '8px' }}>
+                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1.8fr 0.8fr 1.2fr 1fr 1.1fr auto', gap: '8px', alignItems: 'center', marginBottom: '10px', background: '#fff', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                      {/* Item Name */}
                       <div>
-                        <label style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>Item Name</label>
+                        <label style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', fontWeight: 600 }}>Item Name</label>
                         <input
                           type="text"
+                          list={`ingredients-list-${idx}`}
                           required
-                          placeholder="e.g. Rice / Chicken / Oil"
+                          placeholder="e.g. Cooking Oil / Rice"
                           value={item.ingredientName}
-                          onChange={e => {
-                            const updated = [...newPo.items];
-                            updated[idx].ingredientName = e.target.value;
-                            setNewPo({ ...newPo, items: updated });
-                          }}
+                          onChange={e => handleIngredientNameChange(idx, e.target.value)}
                           style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.82rem' }}
                         />
+                        <datalist id={`ingredients-list-${idx}`}>
+                          {availableIngredients.map(ing => (
+                            <option key={ing.ingredientId} value={ing.ingredientName}>
+                              {ing.ingredientName} ({mapBaseUnitToString(ing.baseUnit)})
+                            </option>
+                          ))}
+                        </datalist>
                       </div>
+
+                      {/* Quantity */}
                       <div>
-                        <label style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>Qty</label>
+                        <label style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', fontWeight: 600 }}>Qty</label>
                         <input
                           type="number"
                           step="any"
@@ -584,8 +637,28 @@ export default function ProcurementAdmin({ activeBranch }) {
                           style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.82rem' }}
                         />
                       </div>
+
+                      {/* Unit Selector */}
                       <div>
-                        <label style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>Unit Cost (৳)</label>
+                        <label style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', fontWeight: 600 }}>একক (Unit)</label>
+                        <select
+                          value={item.unitUsed || 'Kilogram'}
+                          onChange={e => {
+                            const updated = [...newPo.items];
+                            updated[idx].unitUsed = e.target.value;
+                            setNewPo({ ...newPo, items: updated });
+                          }}
+                          style={{ width: '100%', padding: '8px 4px', borderRadius: '6px', border: '1px solid #94a3b8', fontSize: '0.82rem', background: '#f8fafc', fontWeight: 700, color: '#0f172a' }}
+                        >
+                          {UNIT_OPTIONS.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Unit Cost */}
+                      <div>
+                        <label style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', fontWeight: 600 }}>দর (৳/{unitLabel})</label>
                         <input
                           type="number"
                           step="any"
@@ -600,14 +673,18 @@ export default function ProcurementAdmin({ activeBranch }) {
                           style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.82rem' }}
                         />
                       </div>
+
+                      {/* Line Total */}
                       <div>
-                        <label style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>Line Total</label>
-                        <div style={{ padding: '8px', fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>
+                        <label style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', fontWeight: 600 }}>মোট টাকা</label>
+                        <div style={{ padding: '8px 2px', fontSize: '0.85rem', fontWeight: 800, color: '#0f172a' }}>
                           ৳{lineTotal.toLocaleString()}
                         </div>
                       </div>
+
+                      {/* Delete */}
                       <div>
-                        <label style={{ fontSize: '0.7rem', color: 'transparent', display: 'block' }}>Del</label>
+                        <label style={{ fontSize: '0.7rem', color: 'transparent', display: 'block' }}>X</label>
                         {newPo.items.length > 1 && (
                           <button
                             type="button"
@@ -727,7 +804,7 @@ export default function ProcurementAdmin({ activeBranch }) {
       {/* ── MODAL: Receive Goods (GRN) ── */}
       {grnTargetPo && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#fff', borderRadius: '14px', padding: '24px', width: '580px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div style={{ background: '#fff', borderRadius: '14px', padding: '24px', width: '600px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>Goods Received Note (GRN)</h3>
@@ -763,10 +840,13 @@ export default function ProcurementAdmin({ activeBranch }) {
               <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                 <div style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: '8px', color: '#334155' }}>Confirmed Intake Quantities</div>
                 {grnData.receivedItems.map((item, idx) => (
-                  <div key={idx} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
-                    <div style={{ fontSize: '0.82rem', fontWeight: 600 }}>{item.ingredientName}</div>
+                  <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr 1fr', gap: '10px', alignItems: 'center', marginBottom: '8px', background: '#fff', padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
                     <div>
-                      <label style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>Qty Received</label>
+                      <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>{item.ingredientName}</div>
+                      <div style={{ fontSize: '0.72rem', color: '#64748b' }}>Ordered: {item.quantityOrdered} {item.unitUsed}</div>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>Qty ({item.unitUsed})</label>
                       <input
                         type="number"
                         step="any"
@@ -776,11 +856,11 @@ export default function ProcurementAdmin({ activeBranch }) {
                           updated[idx].quantityReceived = e.target.value;
                           setGrnData({ ...grnData, receivedItems: updated });
                         }}
-                        style={{ width: '100%', padding: '6px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                        style={{ width: '100%', padding: '6px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.82rem' }}
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>Actual Unit Cost (৳)</label>
+                      <label style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>Cost (৳/{item.unitUsed})</label>
                       <input
                         type="number"
                         step="any"
@@ -790,7 +870,7 @@ export default function ProcurementAdmin({ activeBranch }) {
                           updated[idx].actualUnitCost = e.target.value;
                           setGrnData({ ...grnData, receivedItems: updated });
                         }}
-                        style={{ width: '100%', padding: '6px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                        style={{ width: '100%', padding: '6px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.82rem' }}
                       />
                     </div>
                   </div>
@@ -970,7 +1050,7 @@ export default function ProcurementAdmin({ activeBranch }) {
       {/* ── MODAL: View Full PO & Payment Ledger Details ── */}
       {detailsTargetPo && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#fff', borderRadius: '14px', padding: '24px', width: '600px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+          <div style={{ background: '#fff', borderRadius: '14px', padding: '24px', width: '640px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>Invoice & Payment Ledger</h3>
@@ -999,7 +1079,7 @@ export default function ProcurementAdmin({ activeBranch }) {
 
             {/* Items */}
             <div style={{ marginBottom: '16px' }}>
-              <h4 style={{ margin: '0 0 8px 0', fontSize: '0.85rem', color: '#334155' }}>ক্রয়কৃত মালামালের তালিকা (Ingredients)</h4>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '0.85rem', color: '#334155' }}>ক্রয়কৃত মালামাল ও একক (Ingredients)</h4>
               <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', textAlign: 'left' }}>
                   <thead>
@@ -1015,9 +1095,9 @@ export default function ProcurementAdmin({ activeBranch }) {
                     {(detailsTargetPo.items || []).map((it, idx) => (
                       <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
                         <td style={{ padding: '8px 12px', fontWeight: 600 }}>{it.ingredientName || `Ingredient #${it.ingredientId}`}</td>
-                        <td style={{ padding: '8px 12px' }}>{it.quantityOrdered} {it.unitUsed}</td>
-                        <td style={{ padding: '8px 12px' }}>{it.quantityReceived || 0} {it.unitUsed}</td>
-                        <td style={{ padding: '8px 12px' }}>৳{it.unitCost}</td>
+                        <td style={{ padding: '8px 12px' }}>{it.quantityOrdered} <b>{it.unitUsed}</b></td>
+                        <td style={{ padding: '8px 12px' }}>{it.quantityReceived || 0} <b>{it.unitUsed}</b></td>
+                        <td style={{ padding: '8px 12px' }}>৳{it.unitCost} / {it.unitUsed}</td>
                         <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700 }}>৳{(it.lineTotal || 0).toLocaleString()}</td>
                       </tr>
                     ))}
