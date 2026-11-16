@@ -15,8 +15,26 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 5000
+  timeout: 30000
 });
+
+// Automatic retry interceptor for handling MonsterASP free tier cold-starts
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const config = error.config;
+    if (!config || config.__isRetry) {
+      return Promise.reject(error);
+    }
+    // Retry once if timeout or cold-start error
+    if (error.code === 'ECONNABORTED' || !error.response || [502, 503, 504].includes(error.response?.status)) {
+      config.__isRetry = true;
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      return apiClient(config);
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Synchronously set initial Authorization header if token exists in localStorage
 const initialToken = typeof window !== 'undefined' ? localStorage.getItem('kabirKitchenAccessToken') : null;

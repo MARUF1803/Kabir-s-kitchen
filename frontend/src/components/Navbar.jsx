@@ -152,7 +152,52 @@ export default function Navbar({ onOpenSearch, onOpenReservation }) {
         </label>
 
         {/* Action Buttons */}
-        <div className="nav-actions">
+        <div className="nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {authUser ? (
+            <button
+              onClick={() => changeMode(authUser.role === 'Chef' ? 'kds' : (authUser.role === 'Admin' || authUser.role === 'SuperAdmin') ? 'admin' : 'pos')}
+              style={{
+                background: '#0c251c',
+                color: '#fff',
+                border: '1px solid #1e4535',
+                borderRadius: '12px',
+                padding: '10px 14px',
+                fontWeight: 700,
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+              title="Open Staff Dashboard"
+            >
+              <ShieldCheck size={16} style={{ color: '#22c55e' }} />
+              <span>{authUser.fullName || 'Admin'}</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => changeMode('login')}
+              style={{
+                background: '#0c251c',
+                color: '#fff',
+                border: '1px solid #1e4535',
+                borderRadius: '12px',
+                padding: '10px 15px',
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 4px 12px rgba(12,37,28,0.18)'
+              }}
+              title="Staff Portal & Admin Sign In"
+            >
+              <LogIn size={16} style={{ color: '#ea580c' }} />
+              <span>Sign In</span>
+            </button>
+          )}
+
           <button className="cart-button" onClick={() => setIsCartOpen(true)} aria-label={`Open cart with ${cartCount} items`} style={{ background: '#ea580c', borderRadius: '12px', padding: '10px 16px', boxShadow: '0 8px 20px rgba(234,88,12,0.25)' }}>
             <ShoppingCart size={18} />
             <span>Cart</span>
@@ -165,7 +210,7 @@ export default function Navbar({ onOpenSearch, onOpenReservation }) {
         </div>
       </div>
 
-      {/* ─── Streamlined Customer Main Navigation (Exactly 6 Primary Menus) ─── */}
+      {/* ─── Streamlined Customer Main Navigation ─── */}
       <nav className="customer-subnav" style={{ background: '#fff', borderBottom: '1px solid #eee4d6', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '8px 20px', overflowX: 'auto', whiteSpace: 'nowrap' }} aria-label="Primary site navigation">
         <button
           type="button"
@@ -220,6 +265,15 @@ export default function Navbar({ onOpenSearch, onOpenReservation }) {
         >
           <Navigation size={15} style={{ color: '#2563eb' }} /> Track Order {activeOrdersCount > 0 && <span style={{ background: '#ef4444', color: '#fff', fontSize: '0.65rem', padding: '1px 6px', borderRadius: '10px' }}>{activeOrdersCount}</span>}
         </button>
+
+        <button
+          type="button"
+          className="subnav-link"
+          onClick={() => changeMode(authUser ? (authUser.role === 'Chef' ? 'kds' : (authUser.role === 'Admin' || authUser.role === 'SuperAdmin') ? 'admin' : 'pos') : 'login')}
+          style={{ padding: '8px 16px', borderRadius: '8px', border: 0, background: currentMode === 'login' || currentMode === 'admin' ? '#f1f5f9' : 'transparent', color: '#0c251c', fontWeight: 700, fontSize: '0.88rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+        >
+          <ShieldCheck size={15} style={{ color: '#ea580c' }} /> {authUser ? 'Staff Dashboard' : 'Staff Portal'}
+        </button>
       </nav>
 
       {/* ─── Mobile Drawer ─── */}
@@ -238,6 +292,13 @@ export default function Navbar({ onOpenSearch, onOpenReservation }) {
             <button className="button button--ghost" style={{ justifyContent: 'flex-start' }} onClick={() => { setMobileOpen(false); onOpenReservation?.(); }}>🪑 Dine-in</button>
             <button className="button button--ghost" style={{ justifyContent: 'flex-start' }} onClick={() => changeMode('tracking')}>🛵 Track Order</button>
             <button className="button button--ghost" style={{ justifyContent: 'flex-start' }} onClick={() => changeMode('chat')}>💬 Help & Chat</button>
+            <button
+              className="button button--primary"
+              style={{ justifyContent: 'flex-start', marginTop: '8px', background: '#0c251c', color: '#fff', border: 0 }}
+              onClick={() => { setMobileOpen(false); changeMode(authUser ? (authUser.role === 'Chef' ? 'kds' : (authUser.role === 'Admin' || authUser.role === 'SuperAdmin') ? 'admin' : 'pos') : 'login'); }}
+            >
+              🔐 {authUser ? 'Staff Dashboard' : 'Staff Portal / Sign In'}
+            </button>
           </div>
         </div>
       )}
