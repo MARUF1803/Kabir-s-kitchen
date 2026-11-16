@@ -15,6 +15,8 @@
 # Build output and dependencies
 **/bin/
 **/obj/
+publish/
+**/publish/
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
@@ -30,6 +32,8 @@ frontend/coverage/
 *.db
 *.sqlite
 *.sqlite3
+*.mdf
+*.ldf
 *.bak
 *.dump
 *.pfx
