@@ -148,6 +148,32 @@ public class AuthController : ControllerBase
         });
     }
 
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto request)
+    {
+        var emailOrPhone = request.EmailOrPhone?.Trim();
+        var newPassword = request.NewPassword?.Trim();
+
+        if (string.IsNullOrWhiteSpace(emailOrPhone) || string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 6)
+        {
+            return BadRequest(new { message = "Valid email/phone and a new password with at least 6 characters are required." });
+        }
+
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == emailOrPhone || u.PhoneNumber == emailOrPhone);
+
+        if (user == null || user.IsDeleted)
+        {
+            return NotFound(new { message = "No registered user found with the provided email or phone number." });
+        }
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+        user.IsActive = true;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Password updated successfully. You can now login with your new password." });
+    }
+
     [HttpPost("logout")]
     [Microsoft.AspNetCore.Authorization.Authorize]
     public async Task<IActionResult> Logout()
@@ -166,3 +192,6 @@ public class AuthController : ControllerBase
         return NoContent();
     }
 }
+
+public record ResetPasswordRequestDto(string EmailOrPhone, string NewPassword);
+

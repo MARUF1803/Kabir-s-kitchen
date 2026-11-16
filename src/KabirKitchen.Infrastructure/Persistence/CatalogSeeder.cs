@@ -1,5 +1,6 @@
 using System.Text.Json;
 using KabirKitchen.Domain.Entities.Catalog;
+using KabirKitchen.Domain.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace KabirKitchen.Infrastructure.Persistence;
@@ -64,6 +65,55 @@ public static class CatalogSeeder
             {
                 legacyCat.IsActive = false;
             }
+        }
+
+        // Ensure Maruf Hossain superadmin exists with password Maruf@123456
+        var marufUser = await context.Users
+            .IgnoreQueryFilters()
+            .Include(u => u.Roles)
+            .FirstOrDefaultAsync(u => u.Email == "marruffhossain@gmail.com", cancellationToken);
+
+        var adminRole = await context.Roles
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(r => r.NormalizedName == "ADMIN", cancellationToken);
+
+        if (adminRole == null)
+        {
+            adminRole = new Role { Name = "Admin", NormalizedName = "ADMIN", Description = "System Administrator" };
+            context.Roles.Add(adminRole);
+            await context.SaveChangesAsync(cancellationToken);
+        }
+
+        if (marufUser == null)
+        {
+            marufUser = new User
+            {
+                FullName = "Maruf Hossain",
+                Email = "marruffhossain@gmail.com",
+                PhoneNumber = "01700000001",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Maruf@123456"),
+                IsGlobalSuperAdmin = true,
+                IsActive = true,
+                IsDeleted = false
+            };
+            context.Users.Add(marufUser);
+            await context.SaveChangesAsync(cancellationToken);
+
+            context.UserRoles.Add(new UserRoleAssignment { UserId = marufUser.Id, RoleId = adminRole.Id });
+            await context.SaveChangesAsync(cancellationToken);
+        }
+        else
+        {
+            marufUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword("Maruf@123456");
+            marufUser.FullName = "Maruf Hossain";
+            marufUser.IsActive = true;
+            marufUser.IsDeleted = false;
+            marufUser.IsGlobalSuperAdmin = true;
+            if (!marufUser.Roles.Any(r => r.RoleId == adminRole.Id))
+            {
+                context.UserRoles.Add(new UserRoleAssignment { UserId = marufUser.Id, RoleId = adminRole.Id });
+            }
+            await context.SaveChangesAsync(cancellationToken);
         }
 
         await context.SaveChangesAsync(cancellationToken);

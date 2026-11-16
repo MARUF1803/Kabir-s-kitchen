@@ -84,6 +84,12 @@ export const authApi = {
     apiClient.post('/auth/login', { emailOrPhone, password }).then(r => r.data),
 
   /**
+   * POST /api/auth/reset-password
+   */
+  resetPassword: (emailOrPhone, newPassword) =>
+    apiClient.post('/auth/reset-password', { emailOrPhone, newPassword }).then(r => r.data),
+
+  /**
    * GET /api/auth/me  (requires Bearer token)
    * Returns current authenticated user profile
    */
