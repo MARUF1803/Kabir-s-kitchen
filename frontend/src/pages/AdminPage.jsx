@@ -18,6 +18,7 @@ import InventoryErpAdmin from '../components/InventoryErpAdmin';
 import ReservationAdmin from '../components/ReservationAdmin';
 import CashShiftAdmin from '../components/CashShiftAdmin';
 import CakeOrdersAdmin from '../components/CakeOrdersAdmin';
+import StaffAttendanceAdmin from '../components/StaffAttendanceAdmin';
 import { usersApi, reportsApi, inventoryAdjustApi, inventoryApi, ordersApi } from '../services/api';
 
 // ─── Sidebar Groups ─────────────────────────────────────────────────────────
@@ -876,6 +877,7 @@ export default function AdminPage() {
   const [staffLoading, setStaffLoading] = useState(false);
   const [staffSaving, setStaffSaving] = useState(false);
   const [showAddStaffModal, setShowAddStaffModal] = useState(false);
+  const [staffTab, setStaffTab] = useState('attendance'); // 'attendance' | 'roles'
   const [newStaff, setNewStaff] = useState({ name: '', email: '', password: '', role: 'Cashier', branchId: activeBranch?.id || '' });
 
   // Stock Adjustment Modal
@@ -1187,68 +1189,100 @@ export default function AdminPage() {
 
       case 'Staff':
         return (
-          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px', borderBottom: '1px solid #f1f5f9' }}>
-              <div>
-                <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: '0.06em' }}>RBAC & Security</div>
-                <h2 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', margin: '2px 0 0' }}>Staff Roles & Permissions</h2>
-              </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Sub-tab Navigation */}
+            <div style={{ display: 'flex', gap: '8px', background: '#e2e8f0', padding: '4px', borderRadius: '10px', width: 'fit-content' }}>
               <button
-                onClick={() => setShowAddStaffModal(true)}
+                onClick={() => setStaffTab('attendance')}
                 style={{
-                  background: '#ea580c', border: 'none', borderRadius: '9px',
-                  padding: '8px 16px', fontSize: '0.76rem', fontWeight: 700, color: '#fff',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px'
+                  padding: '8px 18px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem',
+                  background: staffTab === 'attendance' ? '#fff' : 'transparent',
+                  color: staffTab === 'attendance' ? '#0f172a' : '#64748b',
+                  boxShadow: staffTab === 'attendance' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
                 }}
               >
-                <PlusCircle size={15} /> Add Team Member
+                🕒 অটো হাজিরা ও কর্মঘণ্টা (Live Attendance)
+              </button>
+              <button
+                onClick={() => setStaffTab('roles')}
+                style={{
+                  padding: '8px 18px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem',
+                  background: staffTab === 'roles' ? '#fff' : 'transparent',
+                  color: staffTab === 'roles' ? '#0f172a' : '#64748b',
+                  boxShadow: staffTab === 'roles' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                }}
+              >
+                👥 স্টাফ একাউন্ট ও রোল পারমিশন (Staff Roles)
               </button>
             </div>
-            {staffError && <p role="alert" style={{ padding: '12px 24px', color: '#b91c1c' }}>{staffError}</p>}
-            <div style={{ padding: '24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
-              {staffList.map(staff => (
-                <div key={staff.id} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'linear-gradient(135deg,#0c1929,#ea580c)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: '0.9rem', flexShrink: 0 }}>
-                      {(staff.fullName || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.88rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{staff.fullName}</div>
-                      <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{staff.email}</div>
-                    </div>
-                    <button
-                      onClick={() => handleToggleActive(staff.id, staff.isActive ?? staff.active)}
-                      style={{
-                        background: (staff.isActive ?? staff.active) ? '#dcfce7' : '#f1f5f9',
-                        color: (staff.isActive ?? staff.active) ? '#15803d' : '#64748b',
-                        border: '1px solid ' + ((staff.isActive ?? staff.active) ? '#bbf7d0' : '#cbd5e1'),
-                        fontSize: '0.68rem', fontWeight: 800, padding: '3px 8px', borderRadius: '12px', cursor: 'pointer'
-                      }}
-                    >
-                      {(staff.isActive ?? staff.active) ? '● Active' : '○ Disabled'}
-                    </button>
+
+            {staffTab === 'attendance' ? (
+              <StaffAttendanceAdmin activeBranchId={activeBranchId} branches={branches} />
+            ) : (
+              <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px', borderBottom: '1px solid #f1f5f9' }}>
+                  <div>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: '0.06em' }}>RBAC & Security</div>
+                    <h2 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', margin: '2px 0 0' }}>Staff Roles & Permissions</h2>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', paddingTop: '8px', borderTop: '1px solid #e2e8f0' }}>
-                    <div>
-                      <small style={{ fontSize: '0.65rem', color: '#64748b', display: 'block', marginBottom: '2px', fontWeight: 600 }}>Role</small>
-                      <select
-                        value={staff.role}
-                        onChange={e => handleRoleChange(staff.id, e.target.value)}
-                        style={{ width: '100%', padding: '5px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.75rem', fontWeight: 600, background: '#fff', color: '#0f172a' }}
-                      >
-                        {['SuperAdmin', 'Admin', 'BranchManager', 'Cashier', 'Salesman', 'Waiter', 'Chef', 'KitchenStaff', 'Rider'].map(r => <option key={r} value={r}>{r}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <small style={{ fontSize: '0.65rem', color: '#64748b', display: 'block', marginBottom: '2px', fontWeight: 600 }}>Branch</small>
-                      <div style={{ padding: '5px 8px', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '0.75rem', fontWeight: 600, color: '#0f172a', background: '#ffffff' }}>
-                        {staff.branchName || 'All Branches'}
+                  <button
+                    onClick={() => setShowAddStaffModal(true)}
+                    style={{
+                      background: '#ea580c', border: 'none', borderRadius: '9px',
+                      padding: '8px 16px', fontSize: '0.76rem', fontWeight: 700, color: '#fff',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px'
+                    }}
+                  >
+                    <PlusCircle size={15} /> Add Team Member
+                  </button>
+                </div>
+                {staffError && <p role="alert" style={{ padding: '12px 24px', color: '#b91c1c' }}>{staffError}</p>}
+                <div style={{ padding: '24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+                  {staffList.map(staff => (
+                    <div key={staff.id} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'linear-gradient(135deg,#0c1929,#ea580c)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: '0.9rem', flexShrink: 0 }}>
+                          {(staff.fullName || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.88rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{staff.fullName}</div>
+                          <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{staff.email}</div>
+                        </div>
+                        <button
+                          onClick={() => handleToggleActive(staff.id, staff.isActive ?? staff.active)}
+                          style={{
+                            background: (staff.isActive ?? staff.active) ? '#dcfce7' : '#f1f5f9',
+                            color: (staff.isActive ?? staff.active) ? '#15803d' : '#64748b',
+                            border: '1px solid ' + ((staff.isActive ?? staff.active) ? '#bbf7d0' : '#cbd5e1'),
+                            fontSize: '0.68rem', fontWeight: 800, padding: '3px 8px', borderRadius: '12px', cursor: 'pointer'
+                          }}
+                        >
+                          {(staff.isActive ?? staff.active) ? '● Active' : '○ Disabled'}
+                        </button>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', paddingTop: '8px', borderTop: '1px solid #e2e8f0' }}>
+                        <div>
+                          <small style={{ fontSize: '0.65rem', color: '#64748b', display: 'block', marginBottom: '2px', fontWeight: 600 }}>Role</small>
+                          <select
+                            value={staff.role}
+                            onChange={e => handleRoleChange(staff.id, e.target.value)}
+                            style={{ width: '100%', padding: '5px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.75rem', fontWeight: 600, background: '#fff', color: '#0f172a' }}
+                          >
+                            {['SuperAdmin', 'Admin', 'BranchManager', 'Cashier', 'Salesman', 'Waiter', 'Chef', 'KitchenStaff', 'Rider'].map(r => <option key={r} value={r}>{r}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <small style={{ fontSize: '0.65rem', color: '#64748b', display: 'block', marginBottom: '2px', fontWeight: 600 }}>Branch</small>
+                          <div style={{ padding: '5px 8px', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '0.75rem', fontWeight: 600, color: '#0f172a', background: '#ffffff' }}>
+                            {staff.branchName || 'All Branches'}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
         );
 

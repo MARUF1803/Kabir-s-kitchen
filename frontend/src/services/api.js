@@ -404,4 +404,11 @@ export const cashShiftsApi = {
   list: (params = {}) => apiClient.get('/cash-shifts', { params }).then(r => r.data),
 };
 
+// ─── Staff Biometric Attendance API ─────────────────────────
+export const attendanceApi = {
+  daily: (params) => apiClient.get('/attendance/daily', { params }).then(r => r.data),
+  punch: (data) => apiClient.post('/attendance/punch', data).then(r => r.data),
+  manual: (data) => apiClient.post('/attendance/manual', data).then(r => r.data),
+};
+
 export default apiClient;

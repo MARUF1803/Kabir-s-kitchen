@@ -23,6 +23,7 @@ public interface IApplicationDbContext
     DbSet<UserRoleAssignment> UserRoles { get; }
     DbSet<RolePermission> RolePermissions { get; }
     DbSet<UserBranchAssignment> UserBranchAssignments { get; }
+    DbSet<StaffAttendance> StaffAttendances { get; }
     DbSet<Branch> Branches { get; }
     DbSet<DiningTable> DiningTables { get; }
 

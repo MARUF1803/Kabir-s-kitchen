@@ -30,6 +30,7 @@ public class KabirKitchenDbContext : DbContext, IApplicationDbContext
     public DbSet<UserRoleAssignment> UserRoles => Set<UserRoleAssignment>();
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     public DbSet<UserBranchAssignment> UserBranchAssignments => Set<UserBranchAssignment>();
+    public DbSet<StaffAttendance> StaffAttendances => Set<StaffAttendance>();
     public DbSet<Branch> Branches => Set<Branch>();
     public DbSet<DiningTable> DiningTables => Set<DiningTable>();
 
