@@ -743,7 +743,12 @@ export default function PosPage() {
                 }}
               >
                 <div style={{ height: '110px', position: 'relative', overflow: 'hidden' }}>
-                  <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img
+                    src={product.image || '/food-placeholder.svg'}
+                    alt={product.name}
+                    onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = '/food-placeholder.svg'; }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
                   {product.isVeg && <span style={{ position: 'absolute', top: '6px', left: '6px', background: '#059669', color: '#fff', fontSize: '0.62rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>🌿 Veg</span>}
                   {product.isSpicy && <span style={{ position: 'absolute', top: '6px', right: '6px', background: '#dc2626', color: '#fff', fontSize: '0.62rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>🌶️</span>}
                 </div>
