@@ -3,7 +3,11 @@ import { ChefHat, ShoppingCart, MapPin, Search, Menu, X, Navigation, Store, Cake
 import { useApp } from '../context/useApp';
 
 export default function Navbar({ onOpenSearch, onOpenReservation }) {
-  const { currentMode, setCurrentMode, selectedBranchId, setSelectedBranchId, activeBranch, branches, cart, setIsCartOpen, orders, authUser, signOut } = useApp();
+  const {
+    currentMode, setCurrentMode, selectedBranchId, setSelectedBranchId,
+    activeBranch, branches, cart, setIsCartOpen, orders, authUser, signOut,
+    resetToHome, setActiveCategory, setActiveSubCategory
+  } = useApp();
   const [mobileOpen, setMobileOpen] = useState(false);
   const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
   const activeOrdersCount = orders.filter(o => o.status !== 'Delivered').length;
@@ -20,10 +24,20 @@ export default function Navbar({ onOpenSearch, onOpenReservation }) {
     setMobileOpen(false);
 
     // Clear search query so full menu or home is displayed cleanly
-    if (targetId === 'top' || targetId === 'menu') {
+    if (targetId === 'top' || targetId === 'home' || targetId === 'menu') {
       onOpenSearch?.('');
       const searchInputs = document.querySelectorAll('.global-search input');
       searchInputs.forEach(input => { input.value = ''; });
+    }
+
+    if (targetId === 'top' || targetId === 'home') {
+      resetToHome?.();
+      return;
+    }
+
+    if (targetId === 'menu') {
+      setActiveCategory?.('all');
+      setActiveSubCategory?.('all');
     }
 
     const performScroll = (attempts = 0) => {

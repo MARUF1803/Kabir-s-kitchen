@@ -61,6 +61,17 @@ export function AppProvider({ children }) {
 
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [activeCategory, setActiveCategory] = useState('all');
+  const [activeSubCategory, setActiveSubCategory] = useState('all');
+
+  const resetToHome = useCallback(() => {
+    setCurrentMode('customer');
+    setActiveCategory('all');
+    setActiveSubCategory('all');
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, []);
   const [branches, setBranches] = useState([]);
   const [branchLoadError, setBranchLoadError] = useState('');
   const [activePromotions, setActivePromotions] = useState([]);
@@ -726,6 +737,11 @@ export function AppProvider({ children }) {
         branchLoadError,
         products,
         categories,
+        activeCategory,
+        setActiveCategory,
+        activeSubCategory,
+        setActiveSubCategory,
+        resetToHome,
         activePromotions,
         getProductPromotion,
         getProductUnitPrice,

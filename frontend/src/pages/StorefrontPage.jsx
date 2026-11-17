@@ -72,11 +72,10 @@ export default function StorefrontPage({ onSelectProduct, onOpenCakeCustomizer, 
   const {
     products, categories, branches, branchLoadError, productsLoading, productLoadError, categoryLoadError,
     productPage, productTotalCount, hasMoreProducts, loadProductPage,
-    selectedBranchId, activePromotions, setAppliedCoupon, setIsCartOpen
+    selectedBranchId, activePromotions, setAppliedCoupon, setIsCartOpen,
+    activeCategory, setActiveCategory, activeSubCategory, setActiveSubCategory
   } = useApp();
   const productHeroSlides = useMemo(() => createProductHeroSlides(products), [products]);
-  const [activeCategory, setActiveCategory] = useState('all');
-  const [activeSubCategory, setActiveSubCategory] = useState('all');
   const [categoryPreviewProducts, setCategoryPreviewProducts] = useState([]);
   const [categoryPreviewCounts, setCategoryPreviewCounts] = useState({});
   const [categoryPreviewError, setCategoryPreviewError] = useState('');
