@@ -26,7 +26,9 @@ public static class CatalogSeeder
         await using var seedStream = typeof(CatalogSeeder).Assembly
             .GetManifestResourceStream("KabirKitchen.MenuCatalogSeed.json")
             ?? throw new InvalidOperationException("The persistent menu catalog seed resource is missing.");
-        var seed = await JsonSerializer.DeserializeAsync<CatalogSeedDocument>(seedStream, JsonOptions, cancellationToken)
+        using var reader = new StreamReader(seedStream, System.Text.Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+        var jsonText = await reader.ReadToEndAsync(cancellationToken);
+        var seed = JsonSerializer.Deserialize<CatalogSeedDocument>(jsonText, JsonOptions)
             ?? throw new InvalidOperationException("The persistent menu catalog seed resource is invalid.");
 
         ValidateSeed(seed);

@@ -24,6 +24,71 @@ public class MenuController : ControllerBase
     [HttpGet("categories")]
     public async Task<IActionResult> GetCategories()
     {
+        // Auto-heal incorrect or broken catalog images on startup / first hit
+        string autoHealResult = "skipped";
+        try
+        {
+            var updateMap = new Dictionary<string, (string ImageUrl, string? Name, string? Description)>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["catalog-thai-chicken-4"] = ("https://images.pexels.com/photos/106343/pexels-photo-106343.jpeg?auto=compress&cs=tinysrgb&w=600", null, null),
+                ["catalog-chicken-fried-3"] = ("https://images.pexels.com/photos/13795311/pexels-photo-13795311.jpeg?auto=compress&cs=tinysrgb&w=600", null, null),
+                ["catalog-chicken-wings-4"] = ("https://images.pexels.com/photos/36989868/pexels-photo-36989868.jpeg?auto=compress&cs=tinysrgb&w=600", null, null),
+                ["catalog-chicken-popcorn-3"] = ("https://images.pexels.com/photos/2232433/pexels-photo-2232433.jpeg?auto=compress&cs=tinysrgb&w=600", null, null),
+                ["catalog-combo-party-2"] = ("https://images.pexels.com/photos/2271107/pexels-photo-2271107.jpeg?auto=compress&cs=tinysrgb&w=600", null, null),
+                ["catalog-combo-chinese-3"] = ("https://images.pexels.com/photos/2456435/pexels-photo-2456435.jpeg?auto=compress&cs=tinysrgb&w=600", null, null),
+                ["catalog-combo-corporate-4"] = ("https://images.pexels.com/photos/1487511/pexels-photo-1487511.jpeg?auto=compress&cs=tinysrgb&w=600", null, null),
+                ["catalog-combo-chicken-3"] = ("https://images.pexels.com/photos/723198/pexels-photo-723198.jpeg?auto=compress&cs=tinysrgb&w=600", null, null),
+                ["catalog-grocery-frozen-3"] = ("https://images.pexels.com/photos/2474661/pexels-photo-2474661.jpeg?auto=compress&cs=tinysrgb&w=600", null, null),
+                ["catalog-menu-burgers-5"] = ("https://images.pexels.com/photos/1639562/pexels-photo-1639562.jpeg?auto=compress&cs=tinysrgb&w=600", "Smoky BBQ Beef Bacon Burger", "Juicy grilled beef patty topped with halal smoked beef bacon, cheddar cheese, crispy onions, and tangy BBQ sauce."),
+                ["catalog-drink-soft-drinks-5"] = ("https://images.pexels.com/photos/544961/pexels-photo-544961.jpeg?auto=compress&cs=tinysrgb&w=600", "Sparkling Root Beer (Non-Alcoholic)", "Refreshing non-alcoholic carbonated root beer with classic sassafras notes and rich vanilla froth.")
+            };
+
+            var targetSlugs = updateMap.Keys.ToList();
+            var itemsToUpdate = await _context.MenuItems
+                .IgnoreQueryFilters()
+                .Where(m => targetSlugs.Contains(m.Slug))
+                .ToListAsync();
+
+            var hasChanges = false;
+            foreach (var item in itemsToUpdate)
+            {
+                if (updateMap.TryGetValue(item.Slug, out var expected))
+                {
+                    if (item.ImageUrl != expected.ImageUrl)
+                    {
+                        item.ImageUrl = expected.ImageUrl;
+                        hasChanges = true;
+                    }
+                    if (expected.Name != null && item.Name != expected.Name)
+                    {
+                        item.Name = expected.Name;
+                        hasChanges = true;
+                    }
+                    if (expected.Description != null && item.Description != expected.Description)
+                    {
+                        item.Description = expected.Description;
+                        hasChanges = true;
+                    }
+                }
+            }
+
+            if (hasChanges)
+            {
+                var count = await _context.SaveChangesAsync();
+                autoHealResult = $"updated_{count}";
+            }
+            else
+            {
+                autoHealResult = "no_changes_needed";
+            }
+        }
+        catch (Exception ex)
+        {
+            autoHealResult = $"error_{ex.GetType().Name}_{ex.Message}".Replace('\r', ' ').Replace('\n', ' ');
+        }
+
+        Response.Headers["X-AutoHeal-Status"] = autoHealResult.Substring(0, Math.Min(autoHealResult.Length, 150));
+
         var categories = await _context.Categories
             .Where(c => c.IsActive)
             .OrderBy(c => c.DisplayOrder)
