@@ -32,7 +32,7 @@ public class MenuController : ControllerBase
             {
                 ["catalog-thai-chicken-4"] = ("https://images.pexels.com/photos/106343/pexels-photo-106343.jpeg?auto=compress&cs=tinysrgb&w=600", null, null),
                 ["catalog-chicken-fried-3"] = ("https://images.pexels.com/photos/13795311/pexels-photo-13795311.jpeg?auto=compress&cs=tinysrgb&w=600", null, null),
-                ["catalog-chicken-wings-4"] = ("https://images.pexels.com/photos/36989868/pexels-photo-36989868.jpeg?auto=compress&cs=tinysrgb&w=600", null, null),
+                ["catalog-chicken-wings-4"] = ("https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=600&auto=format&fit=crop&q=80", null, null),
                 ["catalog-chicken-popcorn-3"] = ("https://images.pexels.com/photos/2232433/pexels-photo-2232433.jpeg?auto=compress&cs=tinysrgb&w=600", null, null),
                 ["catalog-combo-party-2"] = ("https://images.pexels.com/photos/2271107/pexels-photo-2271107.jpeg?auto=compress&cs=tinysrgb&w=600", null, null),
                 ["catalog-combo-chinese-3"] = ("https://images.pexels.com/photos/2456435/pexels-photo-2456435.jpeg?auto=compress&cs=tinysrgb&w=600", null, null),
