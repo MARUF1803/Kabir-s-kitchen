@@ -15,6 +15,13 @@
       "displayOrder": 4
     },
     {
+      "slug": "kebab-grills",
+      "name": "Kebab & Grills",
+      "icon": "🍢",
+      "imageUrl": "https://res.cloudinary.com/loaken7e/image/upload/v1795025675/kabirskitchen/menu/cat-kebab-grills.jpg",
+      "displayOrder": 3
+    },
+    {
       "slug": "chicken-items",
       "name": "Chicken Items",
       "icon": "🍗",
@@ -11137,6 +11144,381 @@
       "reviews": 103,
       "variants": [],
       "addOns": []
+    },
+    {
+      "categorySlug": "kebab-grills",
+      "subCategorySlug": "seekh-kebabs",
+      "subCategoryName": "Seekh Kebabs",
+      "name": "Royal Beef Sheekh Kebab",
+      "slug": "beef-sheekh-kebab",
+      "description": "Minced beef infused with crushed coriander, green chili, mint and royal spices, skewered and slow-roasted over charcoal. Served on a silver platter with red onion salad, green chutney and warm naan.",
+      "imageUrl": "https://res.cloudinary.com/loaken7e/image/upload/v1795025674/kabirskitchen/menu/beef-sheekh-kebab.jpg",
+      "basePrice": 340,
+      "preparationTimeMinutes": 18,
+      "isVegetarian": false,
+      "isSpicy": true,
+      "isBakeryItem": false,
+      "allowCustomization": true,
+      "isCustomCake": false,
+      "isPopular": true,
+      "rating": 4.9,
+      "reviews": 184,
+      "variants": [
+        {
+          "name": "Standard Platter (2 Skewers)",
+          "additionalPrice": 0
+        },
+        {
+          "name": "Large Feast (4 Skewers)",
+          "additionalPrice": 300
+        }
+      ],
+      "addOns": [
+        {
+          "name": "Extra Butter Naan",
+          "price": 80
+        },
+        {
+          "name": "Garlic Yogurt Dip & Mint Raita",
+          "price": 40
+        },
+        {
+          "name": "Pickled Onion Rings",
+          "price": 20
+        }
+      ]
+    },
+    {
+      "categorySlug": "kebab-grills",
+      "subCategorySlug": "tikka-kebabs",
+      "subCategoryName": "Tikka & Boti",
+      "name": "Royal Chicken Tikka Kebab (6 Pcs)",
+      "slug": "chicken-tikka-kebab",
+      "description": "Succulent boneless chicken chunks marinated in mustard oil, hung curd, and roasted ground spices, grilled to smoky perfection. Served on a royal warmer stand with mint chutney and cucumber garnish.",
+      "imageUrl": "https://res.cloudinary.com/loaken7e/image/upload/v1795025675/kabirskitchen/menu/chicken-tikka-kebab.jpg",
+      "basePrice": 320,
+      "preparationTimeMinutes": 16,
+      "isVegetarian": false,
+      "isSpicy": true,
+      "isBakeryItem": false,
+      "allowCustomization": true,
+      "isCustomCake": false,
+      "isPopular": true,
+      "rating": 5,
+      "reviews": 215,
+      "variants": [
+        {
+          "name": "Standard (6 Pcs)",
+          "additionalPrice": 0
+        },
+        {
+          "name": "Double (12 Pcs)",
+          "additionalPrice": 280
+        }
+      ],
+      "addOns": [
+        {
+          "name": "Garlic Butter Naan",
+          "price": 85
+        },
+        {
+          "name": "Extra Mint Chutney Cup",
+          "price": 30
+        }
+      ]
+    },
+    {
+      "categorySlug": "kebab-grills",
+      "subCategorySlug": "tikka-kebabs",
+      "subCategoryName": "Tikka & Boti",
+      "name": "Creamy Reshmi Malai Kebab (6 Pcs)",
+      "slug": "reshmi-malai-kebab",
+      "description": "Melt-in-mouth chicken supremes marinated in cashew nut paste, rich clotted cream, cardamom, and gentle spices, gently charred in a clay oven. Served on a wooden board with spicy mint dip.",
+      "imageUrl": "https://res.cloudinary.com/loaken7e/image/upload/v1795025676/kabirskitchen/menu/reshmi-malai-kebab.jpg",
+      "basePrice": 350,
+      "preparationTimeMinutes": 16,
+      "isVegetarian": false,
+      "isSpicy": false,
+      "isBakeryItem": false,
+      "allowCustomization": false,
+      "isCustomCake": false,
+      "isPopular": true,
+      "rating": 4.9,
+      "reviews": 142,
+      "variants": [
+        {
+          "name": "Standard (6 Pcs)",
+          "additionalPrice": 0
+        },
+        {
+          "name": "Family Pack (12 Pcs)",
+          "additionalPrice": 310
+        }
+      ],
+      "addOns": [
+        {
+          "name": "Butter Naan",
+          "price": 80
+        },
+        {
+          "name": "Extra Mint Chutney",
+          "price": 30
+        }
+      ]
+    },
+    {
+      "categorySlug": "kebab-grills",
+      "subCategorySlug": "tikka-kebabs",
+      "subCategoryName": "Tikka & Boti",
+      "name": "Charcoal Flame Chicken Boti Kebab",
+      "slug": "charcoal-boti-kebab",
+      "description": "Tender chicken cubes strung on long iron skewers and roasted over raging open charcoal fire for an intensely smoky, juicy, authentic street-style kebab experience.",
+      "imageUrl": "https://res.cloudinary.com/loaken7e/image/upload/v1795025677/kabirskitchen/menu/charcoal-boti-kebab.jpg",
+      "basePrice": 300,
+      "preparationTimeMinutes": 15,
+      "isVegetarian": false,
+      "isSpicy": true,
+      "isBakeryItem": false,
+      "allowCustomization": false,
+      "isCustomCake": false,
+      "isPopular": false,
+      "rating": 4.8,
+      "reviews": 98,
+      "variants": [
+        {
+          "name": "2 Skewers (8 Pcs)",
+          "additionalPrice": 0
+        },
+        {
+          "name": "4 Skewers (16 Pcs)",
+          "additionalPrice": 270
+        }
+      ],
+      "addOns": [
+        {
+          "name": "Tandoori Roti (2 Pcs)",
+          "price": 60
+        },
+        {
+          "name": "Green Salad & Lemon",
+          "price": 30
+        }
+      ]
+    },
+    {
+      "categorySlug": "kebab-grills",
+      "subCategorySlug": "tikka-kebabs",
+      "subCategoryName": "Tikka & Boti",
+      "name": "Gourmet Zafrani Tikka Kebab (6 Pcs)",
+      "slug": "zafrani-tikka-kebab",
+      "description": "Chef's signature chicken tikka steeped in saffron milk, white pepper, and mace, roasted to a golden sheen. Artfully plated with microgreens, fresh mint chutney, and edible flower garnish.",
+      "imageUrl": "https://res.cloudinary.com/loaken7e/image/upload/v1795025678/kabirskitchen/menu/zafrani-tikka-kebab.jpg",
+      "basePrice": 330,
+      "preparationTimeMinutes": 17,
+      "isVegetarian": false,
+      "isSpicy": false,
+      "isBakeryItem": false,
+      "allowCustomization": false,
+      "isCustomCake": false,
+      "isPopular": false,
+      "rating": 4.9,
+      "reviews": 76,
+      "variants": [],
+      "addOns": [
+        {
+          "name": "Garlic Butter Naan",
+          "price": 85
+        }
+      ]
+    },
+    {
+      "categorySlug": "kebab-grills",
+      "subCategorySlug": "tandoori-chicken",
+      "subCategoryName": "Tandoori Chicken",
+      "name": "Charred Tandoori Chicken Quarter",
+      "slug": "tandoori-chicken-quarter",
+      "description": "Classic whole bone-in chicken leg quarter soaked overnight in spiced tandoori marinade, roasted until charred and fragrant. Served with fresh lime wedges and sliced red onions.",
+      "imageUrl": "https://res.cloudinary.com/loaken7e/image/upload/v1795025679/kabirskitchen/menu/tandoori-chicken-quarter.jpg",
+      "basePrice": 260,
+      "preparationTimeMinutes": 20,
+      "isVegetarian": false,
+      "isSpicy": true,
+      "isBakeryItem": false,
+      "allowCustomization": true,
+      "isCustomCake": false,
+      "isPopular": true,
+      "rating": 4.9,
+      "reviews": 312,
+      "variants": [
+        {
+          "name": "Leg Quarter (1 Pc)",
+          "additionalPrice": 0
+        },
+        {
+          "name": "Half Chicken (2 Pcs)",
+          "additionalPrice": 230
+        },
+        {
+          "name": "Full Tandoori Chicken (4 Pcs)",
+          "additionalPrice": 650
+        }
+      ],
+      "addOns": [
+        {
+          "name": "Garlic Naan",
+          "price": 85
+        },
+        {
+          "name": "Butter Naan",
+          "price": 80
+        }
+      ]
+    },
+    {
+      "categorySlug": "combos-platters",
+      "subCategorySlug": "kebab-platters",
+      "subCategoryName": "Kebab Platters",
+      "name": "Kabir's Grand Mixed Kebab Platter",
+      "slug": "grand-mixed-kebab-platter",
+      "description": "The ultimate barbecue feast: 4 Pcs Chicken Tikka + 2 Beef Sheekh Kebabs + 1 Skewer Charcoal Boti + Grilled Seasonal Veggies + Warm Flatbread + Garlic Dip, Red Chutney & Mint Sauce. Perfect for sharing.",
+      "imageUrl": "https://res.cloudinary.com/loaken7e/image/upload/v1795025679/kabirskitchen/menu/grand-mixed-kebab-platter.jpg",
+      "basePrice": 890,
+      "preparationTimeMinutes": 25,
+      "isVegetarian": false,
+      "isSpicy": true,
+      "isBakeryItem": false,
+      "allowCustomization": false,
+      "isCustomCake": false,
+      "isPopular": true,
+      "rating": 5,
+      "reviews": 268,
+      "variants": [
+        {
+          "name": "Platter for 2-3 Persons",
+          "additionalPrice": 0
+        },
+        {
+          "name": "Mega Platter for 4-5 Persons",
+          "additionalPrice": 790
+        }
+      ],
+      "addOns": [
+        {
+          "name": "Extra Basket of 2 Naans",
+          "price": 140
+        },
+        {
+          "name": "Cold Drinks 1.25L",
+          "price": 120
+        }
+      ]
+    },
+    {
+      "categorySlug": "fast-food-menu",
+      "subCategorySlug": "tandoori-breads",
+      "subCategoryName": "Tandoori Breads & Naan",
+      "name": "Garlic Butter Naan",
+      "slug": "garlic-butter-naan",
+      "description": "Artisan leavened flatbread baked against the searing walls of a clay tandoor, brushed generously with melted farm butter, minced garlic, and fresh chopped cilantro.",
+      "imageUrl": "https://res.cloudinary.com/loaken7e/image/upload/v1795025680/kabirskitchen/menu/garlic-butter-naan.jpg",
+      "basePrice": 85,
+      "preparationTimeMinutes": 10,
+      "isVegetarian": true,
+      "isSpicy": false,
+      "isBakeryItem": false,
+      "allowCustomization": false,
+      "isCustomCake": false,
+      "isPopular": true,
+      "rating": 4.9,
+      "reviews": 420,
+      "variants": [],
+      "addOns": [
+        {
+          "name": "Extra Melted Butter Glaze",
+          "price": 20
+        },
+        {
+          "name": "Grated Mozzarella Cheese On Top",
+          "price": 40
+        }
+      ]
+    },
+    {
+      "categorySlug": "fast-food-menu",
+      "subCategorySlug": "tandoori-breads",
+      "subCategoryName": "Tandoori Breads & Naan",
+      "name": "Traditional Tandoori Naan Basket",
+      "slug": "tandoori-naan-basket",
+      "description": "Basket of freshly baked, pillowy-soft tandoori naans with characteristic blistered brown spots. The classic accompaniment to all kebabs and gravies.",
+      "imageUrl": "https://res.cloudinary.com/loaken7e/image/upload/v1795025681/kabirskitchen/menu/tandoori-naan-basket.jpg",
+      "basePrice": 70,
+      "preparationTimeMinutes": 8,
+      "isVegetarian": true,
+      "isSpicy": false,
+      "isBakeryItem": false,
+      "allowCustomization": true,
+      "isCustomCake": false,
+      "isPopular": true,
+      "rating": 4.8,
+      "reviews": 310,
+      "variants": [
+        {
+          "name": "Plain Tandoori Naan",
+          "additionalPrice": 0
+        },
+        {
+          "name": "Butter Glazed Naan",
+          "additionalPrice": 15
+        },
+        {
+          "name": "Cheese Stuffed Naan",
+          "additionalPrice": 50
+        }
+      ],
+      "addOns": []
+    },
+    {
+      "categorySlug": "biryani",
+      "subCategorySlug": "traditional-polao",
+      "subCategoryName": "Traditional Polao & Khichuri",
+      "name": "Old Dhaka Shahi Morog Polao",
+      "slug": "shahi-morog-polao",
+      "description": "Authentic Old Dhaka style aromatic chinigura rice cooked in chicken broth and pure ghee, served with a succulent browned chicken roast leg, golden crisp beresta, whole boiled egg, and tangy alubukhara.",
+      "imageUrl": "https://res.cloudinary.com/loaken7e/image/upload/v1795025682/kabirskitchen/menu/shahi-morog-polao.jpg",
+      "basePrice": 350,
+      "preparationTimeMinutes": 18,
+      "isVegetarian": false,
+      "isSpicy": false,
+      "isBakeryItem": false,
+      "allowCustomization": true,
+      "isCustomCake": false,
+      "isPopular": true,
+      "rating": 5,
+      "reviews": 388,
+      "variants": [
+        {
+          "name": "Single Feast (1:1 with 1 Leg)",
+          "additionalPrice": 0
+        },
+        {
+          "name": "Duo Feast (1:2 with 2 Legs)",
+          "additionalPrice": 330
+        }
+      ],
+      "addOns": [
+        {
+          "name": "Shahi Borhani Glass (250ml)",
+          "price": 60
+        },
+        {
+          "name": "Sweet Shahi Jorda Cup",
+          "price": 60
+        },
+        {
+          "name": "Extra Spiced Boiled Egg",
+          "price": 25
+        }
+      ]
     }
   ]
 }

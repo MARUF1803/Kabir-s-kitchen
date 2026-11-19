@@ -35,7 +35,11 @@ public class MenuController : ControllerBase
                     .Where(m => m.ImageUrl != null && !m.ImageUrl.Contains("res.cloudinary.com"))
                     .CountAsync();
 
-                if (nonCloudinaryCount > 0)
+                var hasKebabCategory = await _context.Categories
+                    .IgnoreQueryFilters()
+                    .AnyAsync(c => c.Slug == "kebab-grills");
+
+                if (nonCloudinaryCount > 0 || !hasKebabCategory)
                 {
                     var seeded = await KabirKitchen.Infrastructure.Persistence.CatalogSeeder.SeedAsync(dbContext);
                     autoHealResult = $"cloudinary_seeded_{seeded}";
