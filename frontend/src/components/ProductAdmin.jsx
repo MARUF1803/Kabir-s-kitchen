@@ -15,11 +15,11 @@ const flattenCategoryTree = (categories, depth = 0) => categories.flatMap(catego
   ...flattenCategoryTree(category.subCategories || category.children || [], depth + 1)
 ]);
 
-export default function ProductAdmin() {
+export default function ProductAdmin({ initialSearch = '' }) {
   const { addProduct } = useApp();
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(initialSearch || '');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -32,6 +32,13 @@ export default function ProductAdmin() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const requestId = useRef(0);
+
+  useEffect(() => {
+    if (initialSearch !== undefined && initialSearch !== searchTerm) {
+      setSearchTerm(initialSearch);
+      setPage(1);
+    }
+  }, [initialSearch]);
 
   const loadData = useCallback(async (requestedPage = page) => {
     const currentRequestId = ++requestId.current;

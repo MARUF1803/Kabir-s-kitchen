@@ -1479,7 +1479,7 @@ export default function AdminPage() {
       case 'Reservations':    return <ReservationAdmin activeBranchId={activeBranchId} />;
       case 'Production ERP':  return <InventoryErpAdmin activeBranchId={activeBranchId} />;
       case 'Procurement':     return <ProcurementAdmin activeBranch={activeBranch} />;
-      case 'Products':        return <ProductAdmin />;
+      case 'Products':        return <ProductAdmin initialSearch={searchQuery} />;
       case 'Promotions':      return <CampaignManagementAdmin />;
       case 'Campaigns':       return <HeroBannerAdmin />;
       case 'Reports':         return <SalesReportAdmin />;
@@ -1671,7 +1671,7 @@ export default function AdminPage() {
               type="text"
               placeholder="Search orders, products, customers... (Ctrl + K)"
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+              onChange={e => { setSearchQuery(e.target.value); if (e.target.value.trim()) setTab('Products'); }}
               style={{
                 border: 'none', background: 'transparent', outline: 'none',
                 fontSize: '0.8rem', color: '#0f172a', width: '100%', fontFamily: 'inherit'
