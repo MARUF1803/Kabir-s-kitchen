@@ -1,6 +1,7 @@
 using KabirKitchen.Application.Common.Interfaces;
 using KabirKitchen.Application.DTOs;
 using KabirKitchen.Application.Services;
+using KabirKitchen.Domain.Common;
 using KabirKitchen.Domain.Entities.Catalog;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,11 +15,13 @@ public class MenuController : ControllerBase
 {
     private readonly IApplicationDbContext _context;
     private readonly CatalogService _catalogService;
+    private readonly IFileStorage _storage;
 
-    public MenuController(IApplicationDbContext context, CatalogService catalogService)
+    public MenuController(IApplicationDbContext context, CatalogService catalogService, IFileStorage storage)
     {
         _context = context;
         _catalogService = catalogService;
+        _storage = storage;
     }
 
     [HttpGet("categories")]
@@ -342,6 +345,51 @@ public class MenuController : ControllerBase
         }
 
         return CreatedAtAction(nameof(GetMenuItems), result.Value);
+    }
+
+    [HttpPost("upload-image")]
+    [Authorize(Roles = "Admin,SuperAdmin,BranchManager")]
+    [Consumes("multipart/form-data")]
+    [RequestFormLimits(MultipartBodyLengthLimit = 5 * 1024 * 1024)]
+    public async Task<IActionResult> UploadProductImage(IFormFile image)
+    {
+        if (image is null || image.Length == 0)
+            return BadRequest(new { message = "A product image file is required." });
+
+        var extension = Path.GetExtension(image.FileName).ToLowerInvariant();
+        var expectedContentType = extension switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".webp" => "image/webp",
+            _ => null
+        };
+        if (image.Length > 5 * 1024 * 1024 || expectedContentType is null)
+        {
+            return BadRequest(new { message = "Upload a JPG, PNG, or WebP image no larger than 5 MB." });
+        }
+
+        await using var stream = new MemoryStream();
+        await image.CopyToAsync(stream);
+        stream.Position = 0;
+        var storageKey = await _storage.SaveAsync($"menu-item-{Guid.NewGuid():N}{extension}", stream, expectedContentType);
+        return Ok(new { storageKey, imageUrl = $"/api/menu/images/{storageKey}" });
+    }
+
+    [HttpGet("images/{storageKey}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetProductImage(string storageKey)
+    {
+        var stream = await _storage.OpenAsync(storageKey);
+        if (stream is null) return NotFound();
+        var contentType = Path.GetExtension(storageKey).ToLowerInvariant() switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".webp" => "image/webp",
+            _ => "application/octet-stream"
+        };
+        return File(stream, contentType);
     }
 
     private static HashSet<long> GetCategoryAndDescendantIds(long categoryId, IReadOnlyCollection<Category> categories)

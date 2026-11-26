@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Boxes, Image, PackagePlus, Plus, Search } from 'lucide-react';
-import apiClient, { mapMenuItemToProduct } from '../services/api';
+import { Boxes, Image, PackagePlus, Plus, Search, Upload } from 'lucide-react';
+import apiClient, { mapMenuItemToProduct, resolveApiUrl } from '../services/api';
 import { useApp } from '../context/useApp';
 import './ProductAdmin.css';
 
@@ -28,6 +28,7 @@ export default function ProductAdmin({ initialSearch = '' }) {
   const [newCategory, setNewCategory] = useState({ name: '', slug: '', parentCategoryId: '', icon: '🍽️' });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [savingCategory, setSavingCategory] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -81,6 +82,28 @@ export default function ProductAdmin({ initialSearch = '' }) {
   }, [loadData, page, searchTerm]);
 
   const updateField = (field, value) => setForm(current => ({ ...current, [field]: value }));
+
+  const handleImageUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setError('');
+    setMessage('');
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await apiClient.post('/menu/upload-image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      updateField('imageUrl', response.data.imageUrl);
+      setMessage('Image uploaded successfully.');
+    } catch (uploadError) {
+      setError(uploadError.response?.data?.message || 'Unable to upload image file.');
+    } finally {
+      setUploadingImage(false);
+      event.target.value = '';
+    }
+  };
 
   const slugify = (value) => value
     .trim()
@@ -171,7 +194,21 @@ export default function ProductAdmin({ initialSearch = '' }) {
             <label>Base price (৳)<input type="number" min="0" step="0.01" value={form.basePrice} onChange={event => updateField('basePrice', event.target.value)} placeholder="1250" required /></label>
           </div>
           <label>Description<textarea value={form.description} onChange={event => updateField('description', event.target.value)} placeholder="Describe ingredients, preparation, and serving details…" rows="4" required /></label>
-          <label>Product image URL<input type="url" value={form.imageUrl} onChange={event => updateField('imageUrl', event.target.value)} placeholder="https://example.com/product.jpg" required /></label>
+          <div className="product-form__image-field">
+            <label>Product image (Upload file or paste URL)
+              <input type="text" value={form.imageUrl} onChange={event => updateField('imageUrl', event.target.value)} placeholder="Upload a file below or paste https://..." required />
+            </label>
+            <div className="product-form__upload-row">
+              <label className="product-form__upload-btn">
+                <Upload size={15} />
+                <span>{uploadingImage ? 'Uploading…' : 'Upload Image File'}</span>
+                <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageUpload} disabled={uploadingImage} hidden />
+              </label>
+              {form.imageUrl && (
+                <img className="product-form__image-preview" src={resolveApiUrl(form.imageUrl)} alt="Preview" onError={e => { e.currentTarget.style.display = 'none'; }} />
+              )}
+            </div>
+          </div>
           <label>Preparation time (minutes)<input type="number" min="1" max="1440" value={form.preparationTimeMinutes} onChange={event => updateField('preparationTimeMinutes', event.target.value)} required /></label>
           <div className="product-form__flags">
             <label><input type="checkbox" checked={form.isVegetarian} onChange={event => updateField('isVegetarian', event.target.checked)} /><span>Vegetarian</span></label>
@@ -207,7 +244,7 @@ export default function ProductAdmin({ initialSearch = '' }) {
               <div className="product-admin__items">
               {visibleProducts.map(product => (
                 <article key={product.id}>
-                  <img src={product.imageUrl || '/food-placeholder.svg'} alt={product.name} onError={event => { event.currentTarget.onerror = null; event.currentTarget.src = '/food-placeholder.svg'; }} />
+                  <img src={resolveApiUrl(product.imageUrl) || '/food-placeholder.svg'} alt={product.name} onError={event => { event.currentTarget.onerror = null; event.currentTarget.src = '/food-placeholder.svg'; }} />
                   <div><span>{product.categoryPath || product.categoryName}</span><strong>{product.name}</strong><small>৳{product.basePrice} · {product.preparationTimeMinutes} min</small></div>
                   <i className={product.isAvailable ? 'active' : 'inactive'}>{product.isAvailable ? 'Active' : 'Inactive'}</i>
                 </article>

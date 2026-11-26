@@ -17,6 +17,12 @@
 .product-form__flags label { display: flex; align-items: center; gap: 7px; margin: 0; padding: 9px 10px; border: 1px solid #e8ddd3; border-radius: 9px; background: white; }
 .product-form__flags input { accent-color: var(--primary); }
 .product-form__category-create { margin-top: 14px; padding-top: 12px; border-top: 1px solid #e8ddd3; }
+.product-form__image-field { margin-bottom: 13px; }
+.product-form__image-field > label { margin-bottom: 8px; }
+.product-form__upload-row { display: flex; align-items: center; gap: 12px; }
+.product-form__upload-btn { display: inline-flex !important; align-items: center; gap: 7px; margin: 0 !important; padding: 8px 14px; border: 1px dashed #c89d7c; border-radius: 9px; background: #fff; color: #79553f; font-size: .74rem; font-weight: 700; cursor: pointer; transition: border-color .15s, background .15s; }
+.product-form__upload-btn:hover { border-color: var(--primary); background: #fff7ed; color: var(--primary); }
+.product-form__image-preview { width: 52px; height: 42px; object-fit: cover; border-radius: 8px; border: 1px solid #e8ddd3; }
 .product-form__category-create summary { margin-bottom: 12px; color: #79553f; font-size: .74rem; font-weight: 750; cursor: pointer; }
 .form-error, .form-success { margin: 4px 0 13px; padding: 10px 12px; border-radius: 9px; font-size: .7rem; }
 .form-error { color: #98312e; background: #fff0ef; }
