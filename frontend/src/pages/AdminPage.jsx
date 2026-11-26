@@ -69,13 +69,13 @@ const SIDEBAR_NAV = [
 ];
 
 const ORDER_STATUS_COLORS = {
-  Confirmed:      { bg: '#dbeafe', color: '#1d4ed8' },
-  Preparing:      { bg: '#fff7ed', color: '#c2410c' },
-  Ready:          { bg: '#dcfce7', color: '#15803d' },
+  Confirmed: { bg: '#dbeafe', color: '#1d4ed8' },
+  Preparing: { bg: '#fff7ed', color: '#c2410c' },
+  Ready: { bg: '#dcfce7', color: '#15803d' },
   OutForDelivery: { bg: '#f5f3ff', color: '#6d28d9' },
-  Delivered:      { bg: '#f1f5f9', color: '#475569' },
-  Pending:        { bg: '#fef9c3', color: '#854d0e' },
-  Cancelled:      { bg: '#fee2e2', color: '#b91c1c' },
+  Delivered: { bg: '#f1f5f9', color: '#475569' },
+  Pending: { bg: '#fef9c3', color: '#854d0e' },
+  Cancelled: { bg: '#fee2e2', color: '#b91c1c' },
 };
 
 function StatusBadge({ status }) {
@@ -100,7 +100,7 @@ function Sparkline({ color, points, height = 34, width = 85 }) {
   });
   const pathD = `M ${coords.join(' L ')}`;
   const fillD = `${pathD} L ${width},${height} L 0,${height} Z`;
-  const gradId = `sparkGrad-${color.replace('#','')}`;
+  const gradId = `sparkGrad-${color.replace('#', '')}`;
 
   return (
     <svg width={width} height={height} style={{ overflow: 'visible' }}>
@@ -571,7 +571,7 @@ function DashboardView({ liveReport, orders, inventory, branches, activeBranch, 
                 <div key={b.id || b.name || i}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.76rem', marginBottom: '5px' }}>
                     <span style={{ fontWeight: 700, color: '#1e293b' }}>
-                      <span style={{ color: '#94a3b8', marginRight: '6px' }}>#{i+1}</span>
+                      <span style={{ color: '#94a3b8', marginRight: '6px' }}>#{i + 1}</span>
                       {b.name}
                     </span>
                     <span style={{ fontWeight: 800, color: '#0f172a' }}>
@@ -1474,16 +1474,16 @@ export default function AdminPage() {
           </div>
         );
 
-      case 'Cake Bookings':   return <CakeOrdersAdmin activeBranchId={activeBranchId} />;
-      case 'Cash Shifts':     return <CashShiftAdmin activeBranchId={activeBranchId} />;
-      case 'Reservations':    return <ReservationAdmin activeBranchId={activeBranchId} />;
-      case 'Production ERP':  return <InventoryErpAdmin activeBranchId={activeBranchId} />;
-      case 'Procurement':     return <ProcurementAdmin activeBranch={activeBranch} />;
-      case 'Products':        return <ProductAdmin initialSearch={searchQuery} />;
-      case 'Promotions':      return <CampaignManagementAdmin />;
-      case 'Campaigns':       return <HeroBannerAdmin />;
-      case 'Reports':         return <SalesReportAdmin />;
-      case 'Support':         return <SupportAdmin />;
+      case 'Cake Bookings': return <CakeOrdersAdmin activeBranchId={activeBranchId} />;
+      case 'Cash Shifts': return <CashShiftAdmin activeBranchId={activeBranchId} />;
+      case 'Reservations': return <ReservationAdmin activeBranchId={activeBranchId} />;
+      case 'Production ERP': return <InventoryErpAdmin activeBranchId={activeBranchId} />;
+      case 'Procurement': return <ProcurementAdmin activeBranch={activeBranch} />;
+      case 'Products': return <ProductAdmin initialSearch={searchQuery} />;
+      case 'Promotions': return <CampaignManagementAdmin />;
+      case 'Campaigns': return <HeroBannerAdmin />;
+      case 'Reports': return <SalesReportAdmin />;
+      case 'Support': return <SupportAdmin />;
       case 'Settings':
         return (
           <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '24px' }}>
