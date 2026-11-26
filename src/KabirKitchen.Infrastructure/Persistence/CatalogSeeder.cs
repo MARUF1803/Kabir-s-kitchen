@@ -219,7 +219,7 @@ public static class CatalogSeeder
             menuItem.DeletedAtUtc = null;
             menuItem.DeletedBy = null;
 
-            foreach (var variantSeed in itemSeed.Variants)
+            foreach (var variantSeed in itemSeed.Variants ?? [])
             {
                 var variant = menuItem.Variants.FirstOrDefault(existing =>
                     string.Equals(existing.VariantName, variantSeed.Name, StringComparison.OrdinalIgnoreCase));
@@ -238,7 +238,7 @@ public static class CatalogSeeder
                 }
             }
 
-            foreach (var addOnSeed in itemSeed.AddOns)
+            foreach (var addOnSeed in itemSeed.AddOns ?? [])
             {
                 var existingLink = menuItem.AddOns.FirstOrDefault(link =>
                     string.Equals(link.AddOn?.Name, addOnSeed.Name, StringComparison.OrdinalIgnoreCase));
