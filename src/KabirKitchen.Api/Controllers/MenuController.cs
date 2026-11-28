@@ -46,7 +46,12 @@ public class MenuController : ControllerBase
                     .IgnoreQueryFilters()
                     .AnyAsync(c => c.Slug == "semi-frozen");
 
-                if (nonCloudinaryCount > 0 || !hasKebabCategory || !hasSemiFrozenCategory)
+                // Check if new 72 semi-frozen items exist (added Nov 2026)
+                var hasNewSemiFrozenItems = await _context.MenuItems
+                    .IgnoreQueryFilters()
+                    .AnyAsync(m => m.Slug == "chicken-cheese-balls-500g");
+
+                if (nonCloudinaryCount > 0 || !hasKebabCategory || !hasSemiFrozenCategory || !hasNewSemiFrozenItems)
                 {
                     var seeded = await KabirKitchen.Infrastructure.Persistence.CatalogSeeder.SeedAsync(dbContext);
                     autoHealResult = $"cloudinary_seeded_{seeded}";
